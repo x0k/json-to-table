@@ -20,6 +20,7 @@ export interface TransformOptions {
   concatPrimitiveValues: boolean
   mergeRecordValues: boolean
   sortHeaders: boolean
+  deduplicateHeaders: boolean
   supportForHeadersGrouping: boolean
   recordViewType: ViewType
   arrayViewType: ViewType

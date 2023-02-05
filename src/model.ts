@@ -139,25 +139,31 @@ export const TRANSFORM_SCHEMA: JSONSchema = {
                       const: true,
                     },
                     collapseHeaders: {
+                      title: 'Combine nested headers',
+                      description: 'Concatenate headers by dot',
+                      type: 'boolean',
+                      default: false,
+                    },
+                    deduplicateHeaders: {
                       title: 'Remove duplicate headings',
                       description: 'Removes identical line headers',
                       type: 'boolean',
                       default: true,
-                    },
+                    }
                   },
                   dependencies: {
-                    collapseHeaders: {
+                    deduplicateHeaders: {
                       oneOf: [
                         {
                           properties: {
-                            collapseHeaders: {
+                            deduplicateHeaders: {
                               const: false,
                             },
                           },
                         },
                         {
                           properties: {
-                            collapseHeaders: {
+                            deduplicateHeaders: {
                               const: true,
                             },
                             supportForHeadersGrouping: {
@@ -204,6 +210,7 @@ export const TRANSFORMED_UI_SCHEMA: UiSchema = {
     'headers',
     'sortHeaders',
     'collapseHeaders',
+    'deduplicateHeaders',
     'supportForHeadersGrouping',
     'indexes',
     'collapseIndexes',
@@ -234,6 +241,7 @@ export function resolvePreset(config: TransformConfig): TransformOptions {
         headers: true,
         indexes: false,
         sortHeaders: false,
+        deduplicateHeaders: false,
         supportForHeadersGrouping: true,
         recordViewType: ViewType.Columns,
         arrayViewType: ViewType.Rows,
@@ -251,6 +259,7 @@ export function resolvePreset(config: TransformConfig): TransformOptions {
         headers: false,
         indexes: false,
         sortHeaders: true,
+        deduplicateHeaders: false,
         supportForHeadersGrouping: false,
         recordViewType: ViewType.Columns,
         arrayViewType: ViewType.Rows,
@@ -268,6 +277,7 @@ export function resolvePreset(config: TransformConfig): TransformOptions {
         headers: true,
         indexes: true,
         sortHeaders: false,
+        deduplicateHeaders: false,
         supportForHeadersGrouping: false,
         recordViewType: ViewType.Columns,
         arrayViewType: ViewType.Rows,

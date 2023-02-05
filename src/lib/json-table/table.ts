@@ -27,7 +27,7 @@ import {
   makeTableHeadersDeduplicatorByLevel,
   makeSplitIntoColumnsByHeaders,
 } from './deduplication'
-import { addHeaders, makeIndexesSetter } from './titles'
+import { makeHeadersSetter, makeIndexesSetter } from './titles'
 import { makeRowStructureBuilder } from './row'
 import { makeCell } from './cell'
 import { createMatrix, fromMatrix } from './matrix'
@@ -43,6 +43,7 @@ export function makeTableTransformer({
   proportionalResizeLimit,
   recordViewType,
   sortHeaders,
+  deduplicateHeaders,
   supportForHeadersGrouping,
   horizontalReflect,
   verticalReflect,
@@ -59,6 +60,7 @@ export function makeTableTransformer({
   const proportionalResizeLimitPercentForHeight = forHeight / 100
 
   const buildRowStructure = makeRowStructureBuilder(indexes)
+  const addHeaders = makeHeadersSetter(collapseHeaders)
   const addIndexes = makeIndexesSetter(collapseIndexes)
 
   const getDeduplicateLevel = makeLevelDeduplicator(buildRowStructure)
@@ -81,7 +83,7 @@ export function makeTableTransformer({
     const deduplicateLevel =
       isProportionalResize &&
       headers &&
-      collapseHeaders &&
+      deduplicateHeaders &&
       tables.length > 1 &&
       (supportForHeadersGrouping
         ? getDeduplicationIntervals
