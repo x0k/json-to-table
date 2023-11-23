@@ -71,9 +71,9 @@ export function App () {
   const [separateOnPages, setSeparateOnPages] = useState(false)
   const handleDataChange = useChangeHandler(setData)
   return (
-    <Stack p={8}>
+    <Stack p={8} maxW="6xl" mx="auto" gap={4} >
       <Heading>JSON to Table</Heading>
-      <Textarea autoFocus value={data} onChange={handleDataChange} />
+      <Textarea autoFocus value={data} onChange={handleDataChange} rows={10} />
       <Form
         validator={validator}
         schema={TRANSFORM_SCHEMA}
