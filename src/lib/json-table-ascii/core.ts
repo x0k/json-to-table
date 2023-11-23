@@ -97,7 +97,7 @@ function omitEmptyLines(rows: string[]) {
   }
 }
 
-function getMaxLineLength(rows: string[]) {
+export function getMaxLineLength(rows: string[]) {
   let max = 0;
   for (let i = 0; i < rows.length; i++) {
     max = Math.max(max, rows[i].length);
