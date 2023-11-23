@@ -11,7 +11,7 @@ import {
 import { isNumber, isString } from 'lib/guards'
 import { max, sum } from 'lib/math'
 import { Entry } from 'lib/entry'
-import { JSONPrimitive } from 'lib/json'
+import { JSONPrimitiveOrNull } from 'lib/json'
 
 export interface MatrixData {
   cell: Cell
@@ -72,7 +72,7 @@ export type MakeWorkBookOptions = Partial<
     modifyRow: (row: Row, rowIndex: number) => void
     modifyCell: (
       sheetCell: ExcelCell,
-      matrixCell: Cell<{ value: JSONPrimitive; col: number; row: number }>,
+      matrixCell: Cell<{ value: JSONPrimitiveOrNull; col: number; row: number }>,
       matrixCellIndex: number
     ) => void
   }

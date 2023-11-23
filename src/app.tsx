@@ -4,7 +4,7 @@ import { Form } from '@rjsf/chakra-ui'
 import validator from "@rjsf/validator-ajv8";
 
 import { makeTableTransformer } from 'lib/json-table';
-import { isJsonPrimitive, JSONType } from 'lib/json';
+import { isJsonPrimitiveOrNull, JSONValue } from 'lib/json';
 import { JSONParseStatus, jsonTryParse } from 'lib/json-parser';
 import { Input, makeTransformOperator, TransformAction } from 'lib/json-transform';
 import { Entry, transformValue } from 'lib/entry';
@@ -33,8 +33,8 @@ function makeTableData (
   report: ReportType,
   data: string,
   reportData: string
-): JSONType {
-  const dataParseResult = jsonTryParse<JSONType>(data)
+): JSONValue {
+  const dataParseResult = jsonTryParse<JSONValue>(data)
   const reportParseResult = jsonTryParse<Input>(reportData)
   try {
     return dataParseResult.status === JSONParseStatus.Ok
@@ -86,15 +86,15 @@ export function App () {
             resolvePreset(formData)
           )
           const tableData = makeTableData(report, data, reportData)
-          const pagesData: Entry<JSONType>[] =
-            isJsonPrimitive(tableData) || !separateOnPages
-              ? [['Report', tableData] as Entry<JSONType>]
+          const pagesData: Entry<JSONValue>[] =
+            isJsonPrimitiveOrNull(tableData) || !separateOnPages
+              ? [['Report', tableData] as Entry<JSONValue>]
               : Array.isArray(tableData)
                 ? tableData.map(
-                  (item, i) => [String(i + 1), item] as Entry<JSONType>
+                  (item, i) => [String(i + 1), item] as Entry<JSONValue>
                 )
                 : Object.keys(tableData).map(
-                  (key) => [key, tableData[key]] as Entry<JSONType>
+                  (key) => [key, tableData[key]] as Entry<JSONValue>
                 )
           const pagesTables = pagesData.map(
             transformValue(tableTransformer)

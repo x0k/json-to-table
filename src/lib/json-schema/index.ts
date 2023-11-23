@@ -6,7 +6,7 @@ import {
   validate,
 } from 'json-schema'
 
-import { JSONRecord, JSONArray, JSONType } from 'lib/json'
+import { JSONRecord, JSONArray, JSONValue } from 'lib/json'
 
 export interface JSONSchema extends JSONSchema7 {
   /** custom field from rjsf */
@@ -30,11 +30,11 @@ export type JSONSchemaTypeNames = JSONSchemaTypeName[]
 
 export function makeValidator(
   schema: JSONSchema7Definition
-): (value: JSONType) => boolean {
+): (value: JSONValue) => boolean {
   return typeof schema === 'boolean'
     ? () => schema
     : //@ts-expect-error wrong types
-      (value: JSONType): boolean => validate(value, schema).valid
+      (value: JSONValue): boolean => validate(value, schema).valid
 }
 
 export function makeIsSchemaType(typeName: JSONSchemaTypeName) {

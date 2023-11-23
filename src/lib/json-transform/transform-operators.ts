@@ -23,11 +23,11 @@ import {
   isObject,
 } from 'lib/guards'
 import {
-  compareJsonType,
+  compareJsonValue,
   isJsonPrimitive,
   JSONArray,
   JSONRecord,
-  JSONType,
+  JSONValue,
 } from 'lib/json'
 import {
   Entry,
@@ -192,7 +192,7 @@ export const transformOperatorsVisitor = {
 
 export interface ValParam {
   /** Значение используемое оператором, по умолчанию `context`. */
-  val?: JSONType | TransformAction
+  val?: JSONValue | TransformAction
 }
 
 export function identityOperator(): TransformAction {
@@ -219,7 +219,7 @@ export interface PluckOperatorParams extends ValParam {
    */
   key: string | number | TransformAction | NonEmptyArray<string>
   /** Значение по умолчанию, если ключ в {@link val} не найден */
-  default?: JSONType | TransformAction
+  default?: JSONValue | TransformAction
 }
 
 export function pluckOperator({
@@ -264,7 +264,7 @@ export function notOperator({ val }: ValParam): TransformAction {
 }
 
 export interface CompareOperatorParams extends ValParam {
-  operand: JSONType | TransformAction
+  operand: JSONValue | TransformAction
 }
 
 export function greaterThanOperator({
@@ -276,7 +276,7 @@ export function greaterThanOperator({
    */
   return (context) => {
     const evl = evalOrReturn(context)
-    return compareJsonType(evl(val ?? context), evl(operand)) === 1
+    return compareJsonValue(evl(val ?? context), evl(operand)) === 1
   }
 }
 
@@ -289,7 +289,7 @@ export function greaterThanOrEqualOperator({
    */
   return (context) => {
     const evl = evalOrReturn(context)
-    return compareJsonType(evl(val ?? context), evl(operand)) > -1
+    return compareJsonValue(evl(val ?? context), evl(operand)) > -1
   }
 }
 
@@ -302,7 +302,7 @@ export function lessThanOperator({
    */
   return (context) => {
     const evl = evalOrReturn(context)
-    return compareJsonType(evl(val ?? context), evl(operand)) === -1
+    return compareJsonValue(evl(val ?? context), evl(operand)) === -1
   }
 }
 
@@ -315,7 +315,7 @@ export function lessThanOrEqualOperator({
    */
   return (context) => {
     const evl = evalOrReturn(context)
-    return compareJsonType(evl(val ?? context), evl(operand)) < 1
+    return compareJsonValue(evl(val ?? context), evl(operand)) < 1
   }
 }
 
@@ -328,7 +328,7 @@ export function equalOperator({
    */
   return (context) => {
     const evl = evalOrReturn(context)
-    return compareJsonType(evl(val ?? context), evl(operand)) === 0
+    return compareJsonValue(evl(val ?? context), evl(operand)) === 0
   }
 }
 
@@ -417,7 +417,7 @@ export function inOperator({ val, values }: InOperatorParams): TransformAction {
     const value = evl(val ?? context)
     const range = evl(values)
     return isArray(range)
-      ? range.find((item) => compareJsonType(value, item) === 0) ?? false
+      ? range.find((item) => compareJsonValue(value, item) === 0) ?? false
       : null
   }
 }
@@ -631,8 +631,8 @@ export function assignOperator({
 
 export interface ConditionOperatorParams {
   if: TransformAction
-  then: JSONType | TransformAction
-  else: JSONType | TransformAction
+  then: JSONValue | TransformAction
+  else: JSONValue | TransformAction
 }
 
 export function conditionOperator({
@@ -691,7 +691,7 @@ export function sortOperator({
             const { direction, field } = fields[i++]
             const aVal = field(a)
             const bVal = field(b)
-            const result = compareJsonType(aVal, bVal)
+            const result = compareJsonValue(aVal, bVal)
             if (result !== 0) {
               return direction === SortOrder.Ascending ? result : -result
             }
@@ -748,7 +748,7 @@ export function someOperator({
 
 export interface GroupByOperatorParams extends ValParam {
   /** Оператор получения группировочного значения */
-  field: JSONType | TransformAction
+  field: JSONValue | TransformAction
 }
 
 export function groupByOperator({
@@ -764,10 +764,10 @@ export function groupByOperator({
       return null
     }
     return items.reduce(
-      (acc: [JSONType, JSONType[]][], val): [JSONType, JSONType[]][] => {
+      (acc: [JSONValue, JSONValue[]][], val): [JSONValue, JSONValue[]][] => {
         const fieldValue = evalOrReturn(val)(field)
         const entry = acc.find(
-          ([entryKey]) => compareJsonType(entryKey, fieldValue) === 0
+          ([entryKey]) => compareJsonValue(entryKey, fieldValue) === 0
         )
         if (entry) {
           entry[1].push(val)
@@ -785,8 +785,8 @@ export interface ForkOperatorParams extends ValParam {
    * Список либо объект содержащий операторы
    */
   branches:
-    | NonEmptyArray<TransformAction | JSONType>
-    | Record<string, TransformAction | JSONType>
+    | NonEmptyArray<TransformAction | JSONValue>
+    | Record<string, TransformAction | JSONValue>
 }
 
 export function forkOperator({
@@ -906,7 +906,7 @@ export function recordOperator({ val }: ValParam): TransformAction {
   return (context) => {
     const value = evalOrReturn(context)(val ?? context)
     return isArray(value) && value.every(isEntry)
-      ? Object.fromEntries(value as Entry<JSONType>[])
+      ? Object.fromEntries(value as Entry<JSONValue>[])
       : null
   }
 }
@@ -962,7 +962,7 @@ export function isObjectOperator({ val }: ValParam): TransformAction {
 }
 
 export interface PushOperatorParams extends ValParam {
-  item: JSONType | TransformAction
+  item: JSONValue | TransformAction
 }
 
 export function pushOperator({
@@ -984,7 +984,7 @@ export interface ReduceOperatorParams extends ValParam {
   /** Оператор вычисления аккумулятора, в качестве контекста получает объект `{ previous, current, index, array, context }` */
   reducer: TransformAction
   /** Начальное значение аккумулятора */
-  initial?: JSONType | TransformAction
+  initial?: JSONValue | TransformAction
 }
 
 export function reduceOperator({
@@ -1001,8 +1001,8 @@ export function reduceOperator({
     const value = evl(val ?? context)
     const initialValue = initial && evl(initial)
     const reducer = (
-      previous: JSONType,
-      current: JSONType,
+      previous: JSONValue,
+      current: JSONValue,
       index: number,
       array: JSONArray
     ) => arg({ previous, current, index, array, context })
@@ -1060,7 +1060,7 @@ export function transformKeyOperator({
    */
   return (context) => {
     const entry = evalOrReturn(context)(val ?? context)
-    return isEntry<JSONType>(entry)
+    return isEntry<JSONValue>(entry)
       ? transformKey(transform as (k: string) => string)(entry)
       : null
   }
@@ -1085,7 +1085,7 @@ export function transformValueOperator({
    */
   return (context) => {
     const entry = evalOrReturn(context)(val ?? context)
-    return isEntry<JSONType>(entry)
+    return isEntry<JSONValue>(entry)
       ? withContext
         ? [
             entry[0],
@@ -1115,7 +1115,7 @@ export function transformKeyValueOperator({
    */
   return (context) => {
     const entry = evalOrReturn(context)(val ?? context)
-    return isEntry<JSONType>(entry)
+    return isEntry<JSONValue>(entry)
       ? [transformKey(entry[0]), transformValue(entry[1])]
       : null
   }
@@ -1181,7 +1181,7 @@ export function flatOperator({
 
 export interface ConcatOperatorParams extends ValParam {
   /** Присоединяемые значения. Если не является списком, то воспринимается как список из одного элемента */
-  items: JSONType | TransformAction
+  items: JSONValue | TransformAction
 }
 
 export function concatOperator({
@@ -1228,13 +1228,13 @@ export interface WhenBranch {
   /** Условие */
   case: TransformAction
   /** Значение */
-  then: TransformAction | JSONType
+  then: TransformAction | JSONValue
 }
 
 export interface WhenOperatorParams extends ValParam {
   branches: NonEmptyArray<WhenBranch>
   /** Значение по умолчанию, по умолчанию `null` */
-  else?: TransformAction | JSONType
+  else?: TransformAction | JSONValue
 }
 
 export function whenOperator({
@@ -1314,7 +1314,7 @@ export function jsonTraverserOperator({
    * Используется обход в глубину
    */
   return (context) => {
-    const traverse = jsonTraverser<JSONType>(
+    const traverse = jsonTraverser<JSONValue>(
       withPath ? (value, path) => visitor({ value, path }) : visitor
     )
     return traverse(evalOrReturn(context)(val ?? context))
@@ -1353,7 +1353,7 @@ export function unzipOperator({ val }: ValParam): TransformAction {
   return (context) => {
     const value = evalOrReturn(context)(val ?? context)
     return isArray(value) && value.every(isEntry)
-      ? unzip(value as Entry<JSONType>[])
+      ? unzip(value as Entry<JSONValue>[])
       : null
   }
 }

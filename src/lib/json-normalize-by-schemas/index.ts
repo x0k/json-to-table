@@ -6,7 +6,7 @@ import {
   JSONSchemaType,
   makeIsSchemaType,
 } from 'lib/json-schema'
-import { JSONType } from 'lib/json'
+import { JSONValue } from 'lib/json'
 import { omit, pick } from 'lib/record'
 import {
   Entry,
@@ -20,7 +20,7 @@ import {
 } from 'lib/json-traverser-with-schemas'
 import { map, generate } from 'lib/array'
 
-export type CustomDefaults = Record<string, JSONType>
+export type CustomDefaults = Record<string, JSONValue>
 
 export enum TupleTransformType {
   Entries = 'entries',
@@ -65,7 +65,7 @@ export interface NormalizeBySchemasOptions {
   /** Значение по умолчанию - применяется, если значение не определено в {@link customDefaults}
    * По умолчанию `null`
    */
-  globalDefault?: JSONType
+  globalDefault?: JSONValue
 }
 
 function getTitleFromSchemas(
@@ -76,22 +76,22 @@ function getTitleFromSchemas(
 }
 
 const tupleToEntries = (
-  value: JSONType[],
+  value: JSONValue[],
   schemas: JSONSchema[],
   uiSchemas: UiSchema[]
 ) =>
   schemas.map(
-    (schema, i): Entry<JSONType> => [
+    (schema, i): Entry<JSONValue> => [
       getTitleFromSchemas(schema, uiSchemas[i]) ?? `№ ${i + 1}`,
       value[i],
     ]
   )
 
 export type TupleTransform = (
-  value: JSONType[],
+  value: JSONValue[],
   schemas: JSONSchema[],
   uiSchemas: UiSchema[]
-) => JSONType
+) => JSONValue
 
 const TUPLES_TRANSFORMS: Record<TupleTransformType, TupleTransform> = {
   [TupleTransformType.Entries]: tupleToEntries,
@@ -110,22 +110,22 @@ export enum VariantsField {
 
 function getRadioVariants(
   { enum: enumValues, enumNames }: JSONSchema,
-  value: JSONType,
-  defaultValue: JSONType
+  value: JSONValue,
+  defaultValue: JSONValue
 ) {
   if (!enumValues) {
     return []
   }
   const index = enumValues.indexOf(value)
   return ((enumNames ?? enumValues) as JSONSchemaType[]).map(
-    (key, i) => [key, i === index ? value : defaultValue] as Entry<JSONType>
+    (key, i) => [key, i === index ? value : defaultValue] as Entry<JSONValue>
   )
 }
 
 function getCheckboxesVariants(
   { enum: enumValues, enumNames }: JSONSchema,
-  value: JSONType[],
-  defaultValue: JSONType
+  value: JSONValue[],
+  defaultValue: JSONValue
 ) {
   if (!enumValues) {
     return []
@@ -135,7 +135,7 @@ function getCheckboxesVariants(
       [
         key,
         value.includes(enumValues[i]) ? enumValues[i] : defaultValue,
-      ] as Entry<JSONType>
+      ] as Entry<JSONValue>
   )
 }
 
@@ -152,8 +152,8 @@ export function makeNormalizerBySchemas({
   customDefaults = {},
   globalDefault = null,
 }: NormalizeBySchemasOptions): (
-  options: TraverserOptions<JSONType>
-) => JSONType {
+  options: TraverserOptions<JSONValue>
+) => JSONValue {
   const expressions = Object.keys(customDefaults).map(
     (pattern) => new RegExp(pattern)
   )
@@ -167,12 +167,12 @@ export function makeNormalizerBySchemas({
   }
   const defineUndefinedValues = makeEntriesTransform(
     map(
-      transformValue((val: JSONType | undefined) =>
+      transformValue((val: JSONValue | undefined) =>
         val === undefined ? globalDefault : val
       )
     )
   )
-  return jsonTraverserWithSchemas<JSONType>(
+  return jsonTraverserWithSchemas<JSONValue>(
     ({ value, resolvedSchema, resolvedUiSchema, path, schema }) => {
       const {
         properties,
@@ -202,7 +202,7 @@ export function makeNormalizerBySchemas({
             const [enumSchema, customSchema] = anyOf as JSONSchema[]
             const variants = getRadioVariants(enumSchema, value, globalDefault)
             const { enum: enumValues } = enumSchema
-            const customVariant: Entry<JSONType> = [
+            const customVariant: Entry<JSONValue> = [
               getTitleFromSchemas(
                 customSchema,
                 (uiAnyOf && uiAnyOf[1]) || {}
@@ -243,7 +243,7 @@ export function makeNormalizerBySchemas({
             const customVariantValues = value.filter(
               (val) => !enumValues.includes(val)
             )
-            const customVariant: Entry<JSONType> = [
+            const customVariant: Entry<JSONValue> = [
               getTitleFromSchemas(
                 customSchema,
                 (uiAnyOf && uiAnyOf[1]) || {}
@@ -294,8 +294,8 @@ export function makeNormalizerBySchemas({
         }
         if (useTitles) {
           const replaceKeysWithTitles = makeEntriesTransform<
-            JSONType,
-            JSONType
+            JSONValue,
+            JSONValue
           >(
             map(
               transformKey((key) => {

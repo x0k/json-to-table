@@ -1,4 +1,4 @@
-import { JSONType } from 'lib/json'
+import { JSONValue } from 'lib/json'
 
 import { ViewType, Table, CellType, TransformOptions } from './model'
 import { makeTableTransformer } from './table'
@@ -98,7 +98,7 @@ describe('TableTransformer', () => {
     expect(result).toEqual(expected)
   })
   it('Should deduplicate headers with grouping header', () => {
-    const data: JSONType = [
+    const data: JSONValue = [
       {
         a: 1,
         b: 2,
