@@ -3,10 +3,10 @@ import {
   horizontalMirror,
   transpose,
   verticalMirror,
-} from 'lib/array'
-import { isNumber, isRecord, isArray } from 'lib/guards'
-import { isJsonPrimitiveOrNull, JSONArray, JSONRecord, JSONValue } from 'lib/json'
-import { lcm, max, sum } from 'lib/math'
+} from '@/lib/array'
+import { isNumber, isRecord, isArray } from '@/lib/guards'
+import { isJsonPrimitiveOrNull, JSONArray, JSONRecord, JSONValue } from '@/lib/json'
+import { lcm, max, sum } from '@/lib/math'
 
 import {
   CellType,

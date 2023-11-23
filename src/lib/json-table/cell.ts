@@ -1,4 +1,4 @@
-import { JSONPrimitiveOrNull } from 'lib/json'
+import { JSONPrimitiveOrNull } from '@/lib/json'
 
 import { Table, CellType } from './model'
 

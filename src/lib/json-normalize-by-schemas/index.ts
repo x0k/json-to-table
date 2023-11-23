@@ -1,24 +1,24 @@
 import { UiSchema } from '@rjsf/utils'
 
-import { isArray, isRecord, isString } from 'lib/guards'
+import { isArray, isRecord, isString } from '@/lib/guards'
 import {
   JSONSchema,
   JSONSchemaType,
   makeIsSchemaType,
-} from 'lib/json-schema'
-import { JSONValue } from 'lib/json'
-import { omit, pick } from 'lib/record'
+} from '@/lib/json-schema'
+import { JSONValue } from '@/lib/json'
+import { omit, pick } from '@/lib/record'
 import {
   Entry,
   makeEntriesTransform,
   transformKey,
   transformValue,
-} from 'lib/entry'
+} from '@/lib/entry'
 import {
   jsonTraverserWithSchemas,
   TraverserOptions,
-} from 'lib/json-traverser-with-schemas'
-import { map, generate } from 'lib/array'
+} from '@/lib/json-traverser-with-schemas'
+import { map, generate } from '@/lib/array'
 
 export type CustomDefaults = Record<string, JSONValue>
 

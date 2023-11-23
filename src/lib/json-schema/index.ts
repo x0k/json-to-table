@@ -6,7 +6,7 @@ import {
   validate,
 } from 'json-schema'
 
-import { JSONRecord, JSONArray, JSONValue } from 'lib/json'
+import { JSONRecord, JSONArray, JSONValue } from '@/lib/json'
 
 export interface JSONSchema extends JSONSchema7 {
   /** custom field from rjsf */

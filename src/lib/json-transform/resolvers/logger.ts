@@ -1,5 +1,5 @@
-import { JSONValue } from 'lib/json'
-import { isFunction } from 'lib/guards'
+import { JSONValue } from '@/lib/json'
+import { isFunction } from '@/lib/guards'
 
 import { TransformResolver, TransformAction } from '../model'
 

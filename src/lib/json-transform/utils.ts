@@ -1,4 +1,4 @@
-import { isFunction } from 'lib/guards'
+import { isFunction } from '@/lib/guards'
 
 export function evalOrReturn<T>(context: T) {
   return <R>(unit: R | ((value: T) => R)): R =>

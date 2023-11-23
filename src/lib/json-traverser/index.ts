@@ -1,5 +1,5 @@
-import { isArray, isRecord } from 'lib/guards'
-import { JSONPrimitiveOrNull, JSONValue } from 'lib/json'
+import { isArray, isRecord } from '@/lib/guards'
+import { JSONPrimitiveOrNull, JSONValue } from '@/lib/json'
 
 export type ResolvedJson<R> = JSONPrimitiveOrNull | Array<R> | Record<string, R>
 

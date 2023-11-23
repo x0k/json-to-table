@@ -1,7 +1,7 @@
-import { isRecord, isString } from 'lib/guards'
-import { JSONValue } from 'lib/json'
-import { makeEntriesTransform, transformValue } from 'lib/entry'
-import { map } from 'lib/array'
+import { isRecord, isString } from '@/lib/guards'
+import { JSONValue } from '@/lib/json'
+import { makeEntriesTransform, transformValue } from '@/lib/entry'
+import { map } from '@/lib/array'
 
 import {
   TransformActionOrData,

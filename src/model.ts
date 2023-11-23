@@ -1,7 +1,7 @@
 import { UiSchema } from '@rjsf/utils'
 
-import { JSONSchema } from 'lib/json-schema'
-import { TransformOptions, ViewType, VIEW_TYPES } from 'lib/json-table'
+import { JSONSchema } from '@/lib/json-schema'
+import { TransformOptions, ViewType, VIEW_TYPES } from '@/lib/json-table'
 
 export enum ReportType {
   Default = 'default',

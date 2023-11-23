@@ -1,4 +1,4 @@
-import { JSONValue } from 'lib/json'
+import { JSONValue } from '@/lib/json'
 
 import { ViewType, Table, CellType, TransformOptions } from './model'
 import { makeTableTransformer } from './table'

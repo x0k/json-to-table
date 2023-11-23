@@ -1,11 +1,11 @@
 import { UiSchema } from '@rjsf/utils'
 import mergeAllOf from 'json-schema-merge-allof'
 
-import { isArray, isSomething, isRecord } from 'lib/guards'
-import { JSONPrimitiveOrNull, JSONRecord, JSONValue } from 'lib/json'
-import { JSONSchema, makeValidator } from 'lib/json-schema'
-import { omit } from 'lib/record'
-import { apply } from 'lib/function'
+import { isArray, isSomething, isRecord } from '@/lib/guards'
+import { JSONPrimitiveOrNull, JSONRecord, JSONValue } from '@/lib/json'
+import { JSONSchema, makeValidator } from '@/lib/json-schema'
+import { omit } from '@/lib/record'
+import { apply } from '@/lib/function'
 
 export interface VisitorOptions<R> {
   value: JSONPrimitiveOrNull | Array<R> | Record<string, R>

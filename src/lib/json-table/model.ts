@@ -1,4 +1,4 @@
-import { JSONArray, JSONPrimitiveOrNull, JSONValue } from 'lib/json'
+import { JSONArray, JSONPrimitiveOrNull, JSONValue } from '@/lib/json'
 
 export enum ViewType {
   Rows = 'rows',

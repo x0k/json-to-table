@@ -3,16 +3,16 @@ import { Stack, Textarea, Button, Heading } from '@chakra-ui/react'
 import { Form } from '@rjsf/chakra-ui'
 import validator from "@rjsf/validator-ajv8";
 
-import { makeTableTransformer } from 'lib/json-table';
-import { isJsonPrimitiveOrNull, JSONValue } from 'lib/json';
-import { JSONParseStatus, jsonTryParse } from 'lib/json-parser';
-import { Input, makeTransformOperator, TransformAction } from 'lib/json-transform';
-import { Entry, transformValue } from 'lib/entry';
-import { createPage } from 'lib/browser';
-import { makeHTMLPage } from 'lib/json-table-html';
-import { makeWorkBook } from 'lib/json-table-xlsx';
-import { max, sum } from 'lib/math';
-import { createFileURL, createXLSBlob, makeDownloadFileByUrl } from 'lib/file';
+import { makeTableTransformer } from '@/lib/json-table';
+import { isJsonPrimitiveOrNull, JSONValue } from '@/lib/json';
+import { JSONParseStatus, jsonTryParse } from '@/lib/json-parser';
+import { Input, makeTransformOperator, TransformAction } from '@/lib/json-transform';
+import { Entry, transformValue } from '@/lib/entry';
+import { createPage } from '@/lib/browser';
+import { makeHTMLPage } from '@/lib/json-table-html';
+import { makeWorkBook } from '@/lib/json-table-xlsx';
+import { max, sum } from '@/lib/math';
+import { createFileURL, createXLSBlob, makeDownloadFileByUrl } from '@/lib/file';
 
 import {
   ReportType,

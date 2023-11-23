@@ -21,14 +21,14 @@ import {
   isRecord,
   isString,
   isObject,
-} from 'lib/guards'
+} from '@/lib/guards'
 import {
   compareJsonValue,
   isJsonPrimitive,
   JSONArray,
   JSONRecord,
   JSONValue,
-} from 'lib/json'
+} from '@/lib/json'
 import {
   Entry,
   isEntry,
@@ -36,16 +36,16 @@ import {
   transformValue,
   zip,
   unzip,
-} from 'lib/entry'
+} from '@/lib/entry'
 import {
   makeNormalizerBySchemas,
   NormalizeBySchemasOptions,
-} from 'lib/json-normalize-by-schemas'
-import { sum } from 'lib/math'
-import { pick, omit } from 'lib/record'
-import { jsonTraverser } from 'lib/json-traverser'
-import { identity } from 'lib/function'
-import { NonEmptyArray } from 'lib/array'
+} from '@/lib/json-normalize-by-schemas'
+import { sum } from '@/lib/math'
+import { pick, omit } from '@/lib/record'
+import { jsonTraverser } from '@/lib/json-traverser'
+import { identity } from '@/lib/function'
+import { NonEmptyArray } from '@/lib/array'
 
 import { TransformAction } from './model'
 import { evalOrReturn } from './utils'

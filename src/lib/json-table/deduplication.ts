@@ -1,7 +1,7 @@
-import { generate, isItemsEqual } from 'lib/array'
-import { isSomething } from 'lib/guards'
-import { JSONArray, compareJsonArray, JSONValue } from 'lib/json'
-import { gcd, min } from 'lib/math'
+import { generate, isItemsEqual } from '@/lib/array'
+import { isSomething } from '@/lib/guards'
+import { JSONArray, compareJsonArray, JSONValue } from '@/lib/json'
+import { gcd, min } from '@/lib/math'
 
 import {
   Table,

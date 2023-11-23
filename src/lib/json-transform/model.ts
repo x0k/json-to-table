@@ -1,4 +1,4 @@
-import { JSONPrimitiveOrNull, JSONValue } from 'lib/json'
+import { JSONPrimitiveOrNull, JSONValue } from '@/lib/json'
 
 export type TransformAction = (context: JSONValue) => JSONValue
 

@@ -1,4 +1,4 @@
-import { isRecord, isString } from 'lib/guards'
+import { isRecord, isString } from '@/lib/guards'
 
 import { TransformAction, TransformResolver } from '../model'
 

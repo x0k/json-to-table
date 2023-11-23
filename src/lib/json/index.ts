@@ -1,4 +1,4 @@
-import type { CompareResult } from "lib/ord";
+import type { CompareResult } from "@/lib/ord";
 
 export type JSONPrimitive = string | number | boolean;
 

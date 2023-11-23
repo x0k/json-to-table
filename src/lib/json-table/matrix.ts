@@ -1,4 +1,4 @@
-import { generate, Matrix } from 'lib/array'
+import { generate, Matrix } from '@/lib/array'
 
 import { Table, Row, CellType, Cell } from './model'
 

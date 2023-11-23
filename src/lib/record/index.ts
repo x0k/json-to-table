@@ -1,4 +1,4 @@
-import { JSONRecord } from 'lib/json'
+import { JSONRecord } from '@/lib/json'
 
 export function pick(value: JSONRecord, fields: string[]): JSONRecord {
   return Object.fromEntries(

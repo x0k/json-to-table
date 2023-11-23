@@ -1,5 +1,5 @@
-import { Table, isHeaderOrIndexCellType } from 'lib/json-table'
-import { Entry } from 'lib/entry'
+import { Table, isHeaderOrIndexCellType } from '@/lib/json-table'
+import { Entry } from '@/lib/entry'
 
 export const defaultStyle = `table, th, td {border: 1px solid black; border-collapse: collapse;} th, td {padding: 5px; text-align: left;}`
 
