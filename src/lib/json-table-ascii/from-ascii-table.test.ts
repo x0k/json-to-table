@@ -3,6 +3,7 @@ import {
   fromASCIITableWithBottomRightShift,
   fromASCIITableWithLeftTopShift,
 } from "./from-ascii-table";
+import { toASCIITable } from './to-ascii-table';
 
 describe("fromASCIITable", () => {
   it("Should work with simple table", () => {
@@ -30,5 +31,7 @@ describe("fromASCIITable", () => {
       `,
       getSimpleMySqlASCIITableSeparatorType
     );
+  const ascii = toASCIITable(table);
+  console.log(ascii);
   });
 });

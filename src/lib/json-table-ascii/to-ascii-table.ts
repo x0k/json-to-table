@@ -28,12 +28,16 @@ export function toASCIITable(table: Table) {
           xShift[j + 1],
           xShift[j] + cell.maxRowLength + 1
         );
+      } else {
+        xShift[j + 1] = Math.max(xShift[j + 1], xShift[j]) 
       }
       if (cell.rowIndex === i) {
         yShift[i + 1] = Math.max(
           yShift[i + 1],
           yShift[i] + cell.rows.length + 1
         );
+      } else {
+        yShift[i + 1] = Math.max(yShift[i + 1], yShift[i])
       }
     }
   }
@@ -53,11 +57,11 @@ export function toASCIITable(table: Table) {
       placed.add(cell);
       const rowIndex = i + yShift[i];
       const colIndex = j + xShift[j];
-      for (let y = rowIndex; y < rowIndex + rows.length; y++) {
+      for (let y = 0; y < rows.length; y++) {
         // TODO: Pad depending on type of cell and content
-        const row = rows[y - rowIndex].padEnd(maxRowLength, " ");
+        const row = rows[y].padEnd(maxRowLength, " ");
         for (let x = 0; x < maxRowLength; x++) {
-          outMatrix[y][x + colIndex] = row[x];
+          outMatrix[y + rowIndex][x + colIndex] = row[x];
         }
       }
     }
