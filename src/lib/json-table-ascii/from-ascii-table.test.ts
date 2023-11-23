@@ -1,8 +1,8 @@
+import { getSimpleMySqlASCIITableSeparatorType } from './core';
 import {
   fromASCIITableWithBottomRightShift,
   fromASCIITableWithLeftTopShift,
-  getSimpleMySqlASCIITableSeparatorType,
-} from "./index";
+} from "./from-ascii-table";
 
 describe("fromASCIITable", () => {
   it("Should work with simple table", () => {
