@@ -14,6 +14,7 @@ const defaultTransformOptions: TransformOptions = {
   indexes: false,
   collapseIndexes: false,
   collapseHeaders: false,
+  deduplicateHeaders: true,
   recordViewType: ViewType.Columns,
   horizontalReflect: false,
   verticalReflect: false,
