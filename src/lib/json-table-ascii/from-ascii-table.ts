@@ -1,9 +1,10 @@
-import { generate, Matrix } from "@/lib/array";
+import { generate } from "@/lib/array";
 import { fromMatrix, CellType } from "@/lib/json-table";
 
 import {
   getContentOfRawCell,
   prepareRows,
+  printRawMatrix,
   RawCell,
   SeparatorType,
 } from "./core";
@@ -50,6 +51,7 @@ export function fromASCIITableWithBottomRightShift(
       regions[i][j] = region;
     }
   }
+  // printRawMatrix(regions);
   let width = 0;
   // Loop over rows
   for (let i = 0; i < originalHeight; i++) {
@@ -92,6 +94,7 @@ export function fromASCIITableWithBottomRightShift(
         region;
     }
   }
+  // printRawMatrix(cleanMatrix);
   // Fill left empty cells
   let i = height - 1;
   let lastNonNullColumnIndex = 1;
@@ -120,6 +123,7 @@ export function fromASCIITableWithBottomRightShift(
     }
     i++;
   }
+  // printRawMatrix(cleanMatrix);
   return fromMatrix(
     cleanMatrix,
     () => CellType.Value,
@@ -174,6 +178,7 @@ export function fromASCIITableWithLeftTopShift(
       regions[i + 1][j + 1] = region;
     }
   }
+  // printRawMatrix(regions);
   let width = 0;
   for (let i = 1; i <= originalHeight; i++) {
     const lastRegionIndex = regions[i].findLastIndex((r) => r !== null);
@@ -215,6 +220,8 @@ export function fromASCIITableWithLeftTopShift(
       ] = region;
     }
   }
+
+  // printRawMatrix(cleanMatrix);
   // Fill bottom empty cells
   let i = 0;
   let lastNonNullRowIndex = height - 2;

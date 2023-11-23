@@ -19,7 +19,7 @@ describe("fromASCIITable", () => {
   });
 
   it("Should work with complex table", () => {
-    const table = fromASCIITableWithLeftTopShift(
+    const table = fromASCIITableWithBottomRightShift(
       `
 +--------------------------------------------+------------------------+
 |                      Col1                  |          Col3          |

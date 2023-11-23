@@ -20,28 +20,28 @@ export function toASCIITable(table: Table) {
       maxRowLength: getMaxLineLength(rows),
     };
   });
+  xShift[0] = yShift[0] = 1;
   for (let i = 0; i < table.height; i++) {
     for (let j = 0; j < table.width; j++) {
       const cell = inputMatrix[i][j];
       if (cell.collIndex === j) {
         xShift[j + 1] = Math.max(
           xShift[j + 1],
-          xShift[j] + cell.maxRowLength + 1
+          xShift[j] + Math.max(cell.maxRowLength - cell.cell.width, 0) + 1
         );
       } else {
-        xShift[j + 1] = Math.max(xShift[j + 1], xShift[j]) 
+        xShift[j + 1] = Math.max(xShift[j + 1], xShift[j]);
       }
       if (cell.rowIndex === i) {
         yShift[i + 1] = Math.max(
           yShift[i + 1],
-          yShift[i] + cell.rows.length + 1
+          yShift[i] + Math.max(cell.rows.length - cell.cell.height, 0) + 1
         );
       } else {
-        yShift[i + 1] = Math.max(yShift[i + 1], yShift[i])
+        yShift[i + 1] = Math.max(yShift[i + 1], yShift[i]);
       }
     }
   }
-  xShift[0] = yShift[0] = 1;
   const height = table.height + yShift[table.height];
   const width = table.width + xShift[table.width];
   const outMatrix = generate(height, () =>
@@ -57,11 +57,27 @@ export function toASCIITable(table: Table) {
       placed.add(cell);
       const rowIndex = i + yShift[i];
       const colIndex = j + xShift[j];
-      for (let y = 0; y < rows.length; y++) {
+      const h =
+        Math.max(cell.height, rows.length) +
+        yShift[i + cell.height] -
+        yShift[i] -
+        1;
+      const w =
+        Math.max(cell.width, maxRowLength) +
+        xShift[j + cell.width] -
+        xShift[j] -
+        1;
+      for (let y = 0; y < h; y++) {
         // TODO: Pad depending on type of cell and content
-        const row = rows[y].padEnd(maxRowLength, " ");
-        for (let x = 0; x < maxRowLength; x++) {
-          outMatrix[y + rowIndex][x + colIndex] = row[x];
+        if (y < rows.length) {
+          const row = rows[y].padEnd(w, " ");
+          for (let x = 0; x < w; x++) {
+            outMatrix[y + rowIndex][x + colIndex] = row[x];
+          }
+        } else {
+          for (let x = 0; x < w; x++) {
+            outMatrix[y + rowIndex][x + colIndex] = " ";
+          }
         }
       }
     }
@@ -73,27 +89,33 @@ export function toASCIITable(table: Table) {
       if (cell !== null) {
         continue;
       }
-      const isBottomEdge = i === height - 1;
+      const isLeftEdge = j === 0;
+      const isTopEdge = i === 0;
       const isRightEdge = j === width - 1;
-      const isRightNull = !isRightEdge && outMatrix[i][j + 1] === null;
-      const isBottomNull = !isBottomEdge && outMatrix[i + 1][j] === null;
+      const isBottomEdge = i === height - 1;
+      const previous = !isLeftEdge && outMatrix[i][j - 1];
+      const next = !isRightEdge && outMatrix[i][j + 1];
+      const beneath = !isBottomEdge && outMatrix[i + 1][j];
+      const above = !isTopEdge && outMatrix[i - 1][j];
       if (
-        (isBottomEdge && isRightEdge) ||
-        (isRightEdge && outMatrix[i][j - 1] === "-") ||
-        (isBottomEdge && outMatrix[i - 1][j] === "|") ||
-        (isRightNull && isBottomNull)
+        ((isLeftEdge || isRightEdge) && (isTopEdge || isBottomEdge)) ||
+        (previous === "-" && beneath === null) ||
+        (above === "|" && next === null) ||
+        (previous === "-" && above === "|")
       ) {
         outMatrix[i][j] = "+";
         continue;
       }
-      if (isRightNull) {
+      if (previous === "+" || previous === "-") {
         outMatrix[i][j] = "-";
         continue;
       }
-      if (isBottomNull) {
+      if (above === "+" || above === "|") {
         outMatrix[i][j] = "|";
         continue;
       }
+      outMatrix[i][j] = "n";
+      continue;
     }
   }
   return outMatrix.map((row) => row.join("")).join("\n");
