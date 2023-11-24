@@ -1,5 +1,6 @@
-import { generate } from "@/lib/array";
+import { array } from "@/lib/array";
 import { fromMatrix, CellType } from "@/lib/json-table";
+import { matrix } from "@/lib/matrix";
 
 import {
   getContentOfRawCell,
@@ -23,11 +24,13 @@ export function fromASCIITable(
   omitEmptyLines(rows);
   const originalHeight = rows.length;
   const originalWidth = getMaxLineLength(rows);
-  const regions = generate(originalHeight + 1, () =>
-    generate<RawCell>(originalWidth + 1, () => null)
+  const regions = matrix<RawCell>(
+    originalHeight + 1,
+    originalWidth + 1,
+    () => null
   );
-  const xShift = generate(originalWidth + 1, () => 0);
-  const yShift = generate(originalHeight + 1, () => 0);
+  const xShift = array(originalWidth + 1, () => 0);
+  const yShift = array(originalHeight + 1, () => 0);
   for (let i = 0; i < originalHeight; i++) {
     const row = rows[i];
     for (let j = 0; j < originalWidth; j++) {
@@ -59,9 +62,7 @@ export function fromASCIITable(
   }
   const width = originalWidth - xShift[originalWidth];
   const height = originalHeight - yShift[originalHeight];
-  const cleanMatrix = generate(height, () =>
-    generate<RawCell>(width, () => null)
-  );
+  const cleanMatrix = matrix<RawCell>(height, width, () => null);
   for (let i = 1; i <= originalHeight; i++) {
     for (let j = 1; j <= originalWidth; j++) {
       const region = regions[i][j];

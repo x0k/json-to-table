@@ -1,4 +1,4 @@
-import { generate, isItemsEqual } from '@/lib/array'
+import { array, isItemsEqual } from '@/lib/array'
 import { isSomething } from '@/lib/guards'
 import { JSONArray, compareJsonArray, JSONValue } from '@/lib/json'
 import { gcd, min } from '@/lib/math'
@@ -216,7 +216,7 @@ export function makeIntervalsDeduplicator(
         ({ indexOfLastRowWithLegitHeader }) => indexOfLastRowWithLegitHeader > 0
       )
       .map(({ indexOfLastRowWithLegitHeader, structures }, i) => {
-        const candidatesOverTable = generate(
+        const candidatesOverTable = array(
           indexOfLastRowWithLegitHeader,
           (j) => {
             const structuresSlice = structures.slice(
@@ -276,12 +276,12 @@ export function splitTableByHeaders(
     }),
     { intervals: [] as (Interval<number> & Cell)[], start: 0 }
   )
-  const tables = generate(intervals.length, (i): Table => {
+  const tables = array(intervals.length, (i): Table => {
     const { start, end, heightShift, ...cell } = intervals[i]
     const isHeader = cell.type === CellType.Header
     const tableHeight = table.height - heightShift
     return {
-      rows: generate(tableHeight, (i) => (!isHeader && i === 0 ? [cell] : [])),
+      rows: array(tableHeight, (i) => (!isHeader && i === 0 ? [cell] : [])),
       height: tableHeight,
       width: cell.width,
     }
@@ -346,7 +346,7 @@ const makeTableSideReducer =
     }
     const { rows, height, width } = table
     const newHeight = height / coefficient
-    const newRows: Row[] = generate(newHeight, () => [])
+    const newRows: Row[] = array(newHeight, () => [])
     rows.forEach((row, oldRowIndex) => {
       const newRowIndex = oldRowIndex / coefficient
       row.forEach((cell) =>

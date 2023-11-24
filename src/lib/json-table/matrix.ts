@@ -1,9 +1,9 @@
-import { generate } from '@/lib/array'
-import { Matrix } from '@/lib/matrix'
+import { array } from "@/lib/array";
+import { Matrix, matrix } from "@/lib/matrix";
 
-import { Table, Row, CellType, Cell } from './model'
+import { Table, Row, CellType, Cell } from "./model";
 
-const UNDEFINED_CELL = Symbol('undefined cell')
+const UNDEFINED_CELL = Symbol("undefined cell");
 
 export function createMatrix<T, R>(
   { height, width, rows }: Table<T>,
@@ -14,27 +14,29 @@ export function createMatrix<T, R>(
     indexInRow: number
   ) => R
 ): Matrix<R> {
-  const matrix: Matrix<typeof UNDEFINED_CELL | R> = generate(height, () =>
-    generate(width, () => UNDEFINED_CELL)
-  )
+  const m = matrix<typeof UNDEFINED_CELL | R>(
+    height,
+    width,
+    () => UNDEFINED_CELL
+  );
   for (let i = 0; i < height; i++) {
-    const row = rows[i]
+    const row = rows[i];
     for (let j = 0; j < row.length; j++) {
-      const cell = row[j]
-      const { height: cellHeight, width: cellWidth } = cell
-      const position = matrix[i].indexOf(UNDEFINED_CELL)
+      const cell = row[j];
+      const { height: cellHeight, width: cellWidth } = cell;
+      const position = m[i].indexOf(UNDEFINED_CELL);
       if (position === -1) {
-        throw new Error('Invalid table')
+        throw new Error("Invalid table");
       }
-      const value = getValue(cell, i, position, j)
+      const value = getValue(cell, i, position, j);
       for (let h = i; h < i + cellHeight && h < height; h++) {
         for (let w = position; w < position + cellWidth && w < width; w++) {
-          matrix[h][w] = value
+          m[h][w] = value;
         }
       }
     }
   }
-  return matrix as Matrix<R>
+  return m as Matrix<R>;
 }
 
 /** Uses reference equality to define cell boundaries */
@@ -43,38 +45,38 @@ export function fromMatrix<T, R>(
   getCellType: (value: T, rowIndex: number, colIndex: number) => CellType,
   getCellValue: (value: T, rowIndex: number, colIndex: number) => R
 ): Table<R> {
-  const height = matrix.length
-  const width = matrix[0].length
-  const cells = new Set<T>()
-  const rows = generate(height, (): Row<R> => [])
+  const height = matrix.length;
+  const width = matrix[0].length;
+  const cells = new Set<T>();
+  const rows = array(height, (): Row<R> => []);
   for (let i = 0; i < height; i++) {
-    let j = 0
+    let j = 0;
     while (j < width) {
-      const cell = matrix[i][j]
+      const cell = matrix[i][j];
       if (cells.has(cell)) {
-        j++
-        continue
+        j++;
+        continue;
       }
-      let h = 1
+      let h = 1;
       while (i + h < height && matrix[i + h][j] === cell) {
-        h++
+        h++;
       }
-      const wStart = j++
+      const wStart = j++;
       while (j < width && matrix[i][j] === cell) {
-        j++
+        j++;
       }
       rows[i].push({
         height: h,
         width: j - wStart,
         type: getCellType(cell, i, wStart),
         value: getCellValue(cell, i, wStart),
-      })
-      cells.add(cell)
+      });
+      cells.add(cell);
     }
   }
   return {
     height,
     width,
     rows,
-  }
+  };
 }

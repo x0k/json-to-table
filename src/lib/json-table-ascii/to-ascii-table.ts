@@ -1,5 +1,6 @@
 import { Cell, CellType, Table, createMatrix } from "@/lib/json-table";
-import { generate } from "@/lib/array";
+import { array } from "@/lib/array";
+import { matrix } from "@/lib/matrix";
 
 import { getMaxLineLength } from "./core";
 
@@ -20,8 +21,8 @@ function padCellRow(row: string, w: number, cell: Cell, rows: string[]) {
 }
 
 export function toASCIITable(table: Table) {
-  const xShift = generate(table.width + 1, () => 0);
-  const yShift = generate(table.height + 1, () => 0);
+  const xShift = array(table.width + 1, () => 0);
+  const yShift = array(table.height + 1, () => 0);
   const inputMatrix = createMatrix(table, (cell, rowIndex, collIndex) => {
     const content =
       typeof cell.value === "string"
@@ -63,9 +64,7 @@ export function toASCIITable(table: Table) {
   }
   const height = table.height + yShift[table.height];
   const width = table.width + xShift[table.width];
-  const outMatrix = generate(height, () =>
-    generate<string | null>(width, () => null)
-  );
+  const outMatrix = matrix<string | null>(height, width, () => null);
   const placed = new Set<Cell>();
   for (let i = 0; i < table.height; i++) {
     for (let j = 0; j < table.width; j++) {

@@ -1,4 +1,14 @@
+import { array } from '@/lib/array'
+
 export type Matrix<T> = T[][]
+
+export function matrix<R> (
+  height: number,
+  width: number,
+  factory: (rowIndex: number) => R
+) {
+  return array(height, () => array(width, factory))
+}
 
 export function transpose<T>(matrix: Matrix<T>): Matrix<T> {
   return matrix[0].map((_, i) => matrix.map((x) => x[i]))

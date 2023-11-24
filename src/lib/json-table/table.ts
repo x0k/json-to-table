@@ -1,4 +1,4 @@
-import { generate } from "@/lib/array";
+import { array } from "@/lib/array";
 import {
   horizontalMirror,
   transpose,
@@ -171,7 +171,7 @@ export function makeTableTransformer({
             generatedRows
           );
         },
-        generate(height, (): Row => [])
+        array(height, (): Row => [])
       ),
     };
   }
@@ -185,7 +185,7 @@ export function makeTableTransformer({
   }
 
   function transformArrayData(value: JSONArray): MergeTablesOptions {
-    const titles = generate(value.length, (i) => String(i + 1));
+    const titles = array(value.length, (i) => String(i + 1));
     const tables = value.map(transformData);
     return { titles, tables, viewType: arrayViewType };
   }

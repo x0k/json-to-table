@@ -1,6 +1,6 @@
 import { Cell as ExcelCell, Column, Row, Workbook } from 'exceljs'
 
-import { generate } from '@/lib/array'
+import { array } from '@/lib/array'
 import { Matrix } from '@/lib/matrix'
 import {
   Table,
@@ -52,7 +52,7 @@ export function calculateSheetData(
     (cell, row, col) => ({ value: cell.cell.value, row: row + 1, col: col + 1 })
   ).rows.flat()
   return {
-    widths: generate(width, (i) =>
+    widths: array(width, (i) =>
       columnWidth(
         matrix.map((row) => row[i]),
         i,
