@@ -1,7 +1,23 @@
-import { Cell, Table, createMatrix } from "@/lib/json-table";
+import { Cell, CellType, Table, createMatrix } from "@/lib/json-table";
 import { generate } from "@/lib/array";
 
 import { getMaxLineLength } from "./core";
+
+function padCellRow(row: string, w: number, cell: Cell, rows: string[]) {
+  switch (cell.type) {
+    case CellType.Header:
+    case CellType.Index: {
+      const p = Math.floor((w - row.length) / 2);
+      return (p > 0 ? row.padStart(p + row.length) : row).padEnd(w);
+    }
+    default: {
+      if (rows.length === 1 && !isNaN(Number(row))) {
+        return row.padStart(w);
+      }
+      return row.padEnd(w);
+    }
+  }
+}
 
 export function toASCIITable(table: Table) {
   const xShift = generate(table.width + 1, () => 0);
@@ -59,11 +75,12 @@ export function toASCIITable(table: Table) {
       const colIndex = j + xShift[j];
       const h = cell.height + yShift[i + cell.height] - yShift[i] - 1;
       const w = cell.width + xShift[j + cell.width] - xShift[j] - 1;
+      const startRow = Math.floor((h - rows.length) / 2);
+      const endRow = startRow + rows.length;
       for (let y = 0; y < h; y++) {
-        // TODO: Pad depending on type of cell and content
         const c = y + rowIndex;
-        if (y < rows.length) {
-          const row = rows[y].padEnd(w, " ");
+        if (y >= startRow && y < endRow) {
+          const row = padCellRow(rows[y - startRow], w, cell, rows);
           for (let x = 0; x < w; x++) {
             outMatrix[c][x + colIndex] = row[x];
           }

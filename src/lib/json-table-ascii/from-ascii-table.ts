@@ -69,7 +69,7 @@ export function fromASCIITable(
   }
   return fromMatrix(
     cleanMatrix,
-    () => CellType.Value,
+    (_, rowIndex) => rowIndex === 0 ? CellType.Header : CellType.Value,
     (cell) => {
       if (cell === null) {
         throw new Error("Invalid table");
