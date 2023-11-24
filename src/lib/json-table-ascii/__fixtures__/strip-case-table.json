@@ -1,0 +1,34 @@
+{
+  "height": 2,
+  "width": 2,
+  "rows": [
+    [
+      {
+        "type": "header",
+        "height": 1,
+        "width": 1,
+        "value": "name"
+      },
+      {
+        "type": "header",
+        "height": 1,
+        "width": 1,
+        "value": "private"
+      }
+    ],
+    [
+      {
+        "type": "value",
+        "height": 1,
+        "width": 1,
+        "value": "json-to-table"
+      },
+      {
+        "type": "value",
+        "height": 1,
+        "width": 1,
+        "value": "true"
+      }
+    ]
+  ]
+}

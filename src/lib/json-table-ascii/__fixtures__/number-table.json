@@ -1,0 +1,38 @@
+{
+  "width": 1,
+  "height": 4,
+  "rows": [
+    [
+      {
+        "height": 1,
+        "width": 4,
+        "value": 1,
+        "type": "value"
+      }
+    ],
+    [
+      {
+        "height": 1,
+        "width": 4,
+        "value": 2,
+        "type": "value"
+      }
+    ],
+    [
+      {
+        "height": 1,
+        "width": 4,
+        "value": 11,
+        "type": "value"
+      }
+    ],
+    [
+      {
+        "height": 1,
+        "width": 4,
+        "value": 22,
+        "type": "value"
+      }
+    ]
+  ]
+}

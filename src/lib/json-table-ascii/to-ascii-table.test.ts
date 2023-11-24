@@ -1,6 +1,8 @@
 import { CellType, Table } from "@/lib/json-table/model";
 
 import { toASCIITable } from "./to-ascii-table";
+import numberTable from './__fixtures__/number-table.json';
+import stripCaseTable from './__fixtures__/strip-case-table.json'
 
 describe("toASCIITable", () => {
   it("Should work with simple table", () => {
@@ -27,41 +29,7 @@ describe("toASCIITable", () => {
     );
   });
   it("Should't strip cell values", () => {
-    const table: Table = {
-      height: 2,
-      width: 2,
-      rows: [
-        [
-          {
-            type: CellType.Header,
-            height: 1,
-            width: 1,
-            value: "name",
-          },
-          {
-            type: CellType.Header,
-            height: 1,
-            width: 1,
-            value: "private",
-          },
-        ],
-        [
-          {
-            type: CellType.Value,
-            height: 1,
-            width: 1,
-            value: "json-to-table",
-          },
-          {
-            type: CellType.Value,
-            height: 1,
-            width: 1,
-            value: "true",
-          },
-        ],
-      ],
-    };
-    const ascii = toASCIITable(table);
+    const ascii = toASCIITable(stripCaseTable as Table);
     expect(`\n${ascii}`).toBe(`
 +---------------+---------+
 |     name      | private |
@@ -69,4 +37,9 @@ describe("toASCIITable", () => {
 | json-to-table | true    |
 +---------------+---------+`);
   });
+  it('Should properly work with numbers', () => {
+    const ascii = toASCIITable(numberTable as Table);
+    console.log(ascii);
+    // expect(`\n${ascii}`).toBe(``)
+  })
 });
