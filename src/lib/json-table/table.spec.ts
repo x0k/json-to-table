@@ -4,7 +4,7 @@ import { ViewType, Table, CellType, TransformOptions } from './model'
 import { makeTableTransformer } from './table'
 
 const defaultTransformOptions: TransformOptions = {
-  arrayViewType: ViewType.Rows,
+  arrayViewType: ViewType.Indexes,
   proportionalResizeLimit: 0,
   concatPrimitiveValues: false,
   mergeRecordValues: false,
@@ -15,7 +15,7 @@ const defaultTransformOptions: TransformOptions = {
   collapseIndexes: false,
   collapseHeaders: false,
   deduplicateHeaders: true,
-  recordViewType: ViewType.Columns,
+  recordViewType: ViewType.Headers,
   horizontalReflect: false,
   verticalReflect: false,
   transpose: false,

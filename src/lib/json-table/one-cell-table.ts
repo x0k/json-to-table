@@ -2,7 +2,7 @@ import { JSONPrimitiveOrNull } from '@/lib/json'
 
 import { Table, CellType } from './model'
 
-export function makeCell(value: JSONPrimitiveOrNull): Table {
+export function makeOneCellTable(value: JSONPrimitiveOrNull): Table {
   return {
     height: 1,
     width: 1,

@@ -34,7 +34,7 @@ import {
 } from "./deduplication";
 import { makeHeadersSetter, makeIndexesSetter } from "./titles";
 import { makeRowStructureBuilder } from "./row";
-import { makeCell } from "./cell";
+import { makeOneCellTable } from "./one-cell-table";
 import { createMatrix, fromMatrix } from "./matrix";
 
 export function makeTableTransformer({
@@ -150,16 +150,16 @@ export function makeTableTransformer({
           const plugHeight =
             !isProportionalResize && height - tableHeight * multiplier;
           return rows.reduce(
-            (acc, originalRow, i) =>
-              acc.map((generatedRow, j) =>
-                j === multiplier * i
+            (acc, originalRow, j) =>
+              acc.map((generatedRow, k) =>
+                k === multiplier * j
                   ? generatedRow.concat(
                       originalRow.map((cell) => ({
                         ...cell,
                         height: cell.height * multiplier,
                       }))
                     )
-                  : i === 0 && height - j === plugHeight
+                  : j === 0 && height - k === plugHeight
                   ? generatedRow.concat({
                       value: "",
                       height: plugHeight,
@@ -177,7 +177,7 @@ export function makeTableTransformer({
   }
 
   function mergeTables({ titles, tables, viewType }: MergeTablesOptions) {
-    return viewType === ViewType.Rows
+    return viewType === ViewType.Indexes
       ? makeRows(indexes ? addIndexes(titles, tables) : tables)
       : headers
       ? addHeaders(makeColumns(tables), titles, tables)
@@ -200,11 +200,11 @@ export function makeTableTransformer({
   function transformData(value: JSONValue): Table {
     const isArr = isArray(value);
     return isJsonPrimitiveOrNull(value)
-      ? makeCell(value)
+      ? makeOneCellTable(value)
       : Object.keys(value).length === 0
-      ? makeCell("")
+      ? makeOneCellTable("")
       : isArr && concatPrimitiveValues && value.every(isJsonPrimitiveOrNull)
-      ? makeCell(value.join(", "))
+      ? makeOneCellTable(value.join(", "))
       : mergeTables(
           isArr &&
             mergeRecordValues &&
