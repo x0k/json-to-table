@@ -23,6 +23,7 @@ export enum TransformPreset {
 export enum TransformFormat {
   HTML = 'HTML',
   XLSX = 'XLSX',
+  ASCII = 'ASCII',
 }
 
 export const TRANSFORM_SCHEMA: JSONSchema = {
@@ -36,7 +37,7 @@ export const TRANSFORM_SCHEMA: JSONSchema = {
       default: TransformPreset.Optimal,
     },
     format: {
-      title: 'File format',
+      title: 'Output format',
       type: 'string',
       enum: Object.values(TransformFormat),
       default: TransformFormat.HTML,
