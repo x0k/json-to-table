@@ -44,7 +44,6 @@ describe("makeTableFactory", () => {
   it("Should create table for arrays", () => {
     const data = [1, 2, [11, 22]];
     const table = factory(data);
-    console.log(JSON.stringify(table))
     const ascii = toASCIITable(table);
     console.log(ascii);
     // expect(`\n${ascii}\n`).toBe(``)

@@ -149,7 +149,7 @@ export function makeTableFactory({
         width: tableWidth,
         height: tableHeight,
       } = tables[i];
-      const multiplier = Math.floor(height / tableHeight);
+      const multiplier = Math.floor(width / tableWidth);
       const plugWidth =
         !isProportionalResize && width - tableWidth * multiplier;
       for (let j = 0; j < tableRows.length; j++) {

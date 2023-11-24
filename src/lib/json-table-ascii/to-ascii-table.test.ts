@@ -1,7 +1,6 @@
 import { CellType, Table } from "@/lib/json-table/model";
 
 import { toASCIITable } from "./to-ascii-table";
-import numberTable from './__fixtures__/number-table.json';
 import stripCaseTable from './__fixtures__/strip-case-table.json'
 
 describe("toASCIITable", () => {
@@ -37,9 +36,4 @@ describe("toASCIITable", () => {
 | json-to-table | true    |
 +---------------+---------+`);
   });
-  it('Should properly work with numbers', () => {
-    const ascii = toASCIITable(numberTable as Table);
-    console.log(ascii);
-    // expect(`\n${ascii}`).toBe(``)
-  })
 });
