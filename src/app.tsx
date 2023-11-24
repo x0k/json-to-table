@@ -6,11 +6,6 @@ import validator from "@rjsf/validator-ajv8";
 import { makeTableTransformer, Table } from "@/lib/json-table";
 import { isJsonPrimitiveOrNull, JSONValue } from "@/lib/json";
 import { JSONParseStatus, jsonTryParse } from "@/lib/json-parser";
-import {
-  Input,
-  makeTransformOperator,
-  TransformAction,
-} from "@/lib/json-transform";
 import { Entry, transformValue } from "@/lib/entry";
 import { createPage, renderPage } from "@/lib/browser";
 import { makeHTMLPageContent, HTML_TABLE_STYLES } from "@/lib/json-table-html";
@@ -21,9 +16,9 @@ import {
   createXLSBlob,
   makeDownloadFileByUrl,
 } from "@/lib/file";
+import { toASCIITable } from "@/lib/json-table-ascii/to-ascii-table";
 
 import {
-  ReportType,
   resolvePreset,
   TransformConfig,
   TRANSFORMED_UI_SCHEMA,
@@ -31,7 +26,6 @@ import {
   TransformPreset,
   TRANSFORM_SCHEMA,
 } from "./model";
-import { toASCIITable } from "./lib/json-table-ascii/to-ascii-table";
 
 function useChangeHandler(handler: (value: string) => void) {
   return useCallback(
@@ -41,46 +35,20 @@ function useChangeHandler(handler: (value: string) => void) {
   );
 }
 
-function makeTableData(
-  report: ReportType,
-  data: string,
-  reportData: string
-): JSONValue {
+function makeTableData(data: string): JSONValue {
   const dataParseResult = jsonTryParse<JSONValue>(data);
-  const reportParseResult = jsonTryParse<Input>(reportData);
-  try {
-    return dataParseResult.status === JSONParseStatus.Ok
-      ? report === ReportType.Custom
-        ? reportParseResult.status === JSONParseStatus.Ok
-          ? (makeTransformOperator(reportParseResult.data) as TransformAction)(
-              dataParseResult.data
-            )
-          : {
-              Error: "An error occurred while trying to recognize the operator",
-            }
-        : dataParseResult.data
-      : {
-          Error: "An error occurred while trying to recognize the data",
-        };
-  } catch (e) {
-    console.error(e);
-    return {
-      Error:
-        e instanceof Error
-          ? e.message
-          : "An unknown error occurred when trying to calculate the operator",
-    };
-  }
+  return dataParseResult.status === JSONParseStatus.Ok
+    ? dataParseResult.data
+    : {
+        Error: `An error occurred while trying to recognize the data:\n"${dataParseResult.error}"`,
+      };
 }
 
 export function App() {
   const [data, setData] = useState("");
-  const [report, setReport] = useState(ReportType.Default);
-  const [reportData, setReportData] = useState("");
   const [transformData, setTransformData] = useState<TransformConfig>({
     preset: TransformPreset.Optimal,
   });
-  const [separateOnPages, setSeparateOnPages] = useState(false);
   const handleDataChange = useChangeHandler(setData);
   return (
     <Stack p={8} maxW="6xl" mx="auto" gap={4}>
@@ -97,9 +65,9 @@ export function App() {
           const tableTransformer = makeTableTransformer(
             resolvePreset(formData)
           );
-          const tableData = makeTableData(report, data, reportData);
+          const tableData = makeTableData(data);
           const pagesData: Entry<JSONValue>[] =
-            isJsonPrimitiveOrNull(tableData) || !separateOnPages
+            isJsonPrimitiveOrNull(tableData) || !formData.paginate
               ? [["Report", tableData] as Entry<JSONValue>]
               : Array.isArray(tableData)
               ? tableData.map(

@@ -1,49 +1,46 @@
-import { UiSchema } from '@rjsf/utils'
+import { UiSchema } from "@rjsf/utils";
 
-import { JSONSchema } from '@/lib/json-schema'
-import { TransformOptions, ViewType, VIEW_TYPES } from '@/lib/json-table'
-
-export enum ReportType {
-  Default = 'default',
-  Custom = 'custom',
-}
-
-export const REPORT_TYPE_TITLES: Record<ReportType, string> = {
-  [ReportType.Default]: 'Default',
-  [ReportType.Custom]: 'Custom',
-}
+import { JSONSchema } from "@/lib/json-schema";
+import { TransformOptions, ViewType, VIEW_TYPES } from "@/lib/json-table";
 
 export enum TransformPreset {
-  Optimal = 'Optimal',
-  Compact = 'Compact',
-  Detailed = 'Detailed',
-  Manual = 'Manual',
+  Optimal = "Optimal",
+  Compact = "Compact",
+  Detailed = "Detailed",
+  Manual = "Manual",
 }
 
 export enum TransformFormat {
-  HTML = 'HTML',
-  XLSX = 'XLSX',
-  ASCII = 'ASCII',
+  HTML = "HTML",
+  XLSX = "XLSX",
+  ASCII = "ASCII",
 }
 
 export const TRANSFORM_SCHEMA: JSONSchema = {
-  type: 'object',
-  title: 'Settings',
+  type: "object",
+  title: "Settings",
   properties: {
     preset: {
-      title: 'Preset',
-      type: 'string',
+      title: "Preset",
+      type: "string",
       enum: Object.values(TransformPreset),
       default: TransformPreset.Optimal,
     },
     format: {
-      title: 'Output format',
-      type: 'string',
+      title: "Output format",
+      type: "string",
       enum: Object.values(TransformFormat),
       default: TransformFormat.HTML,
     },
+    paginate: {
+      title: "Paginate",
+      description:
+        "Partitioning the input data (object or array) into pages by their keys",
+      type: "boolean",
+      default: false,
+    },
   },
-  required: ['preset', 'format'],
+  required: ["preset", "format"],
   dependencies: {
     preset: {
       oneOf: [
@@ -53,83 +50,84 @@ export const TRANSFORM_SCHEMA: JSONSchema = {
               const: TransformPreset.Manual,
             },
             headers: {
-              type: 'boolean',
-              title: 'Headers',
+              type: "boolean",
+              title: "Headers",
               description:
-                'Enables/disables headers when merging tables by columns',
+                "Enables/disables headers when merging tables by columns",
               default: true,
             },
             sortHeaders: {
-              type: 'boolean',
-              title: 'Sort headers',
-              description: 'Enables/disables header sorting',
+              type: "boolean",
+              title: "Sort headers",
+              description: "Enables/disables header sorting",
               default: false,
             },
             indexes: {
-              type: 'boolean',
-              title: 'Indexes',
+              type: "boolean",
+              title: "Indexes",
               description:
-                'Enables/disables headers when merging tables line by line',
+                "Enables/disables headers when merging tables line by line",
               default: false,
             },
             concatPrimitiveValues: {
-              title: 'Combine simple values',
+              title: "Combine simple values",
               description:
                 "Combines the values of an array of primitives into one cell (separated by ',')",
-              type: 'boolean',
+              type: "boolean",
               default: true,
             },
             mergeRecordValues: {
-              title: 'Combine complex values',
-              description: 'Combines a set of complex values into one',
-              type: 'boolean',
+              title: "Combine complex values",
+              description: "Combines a set of complex values into one",
+              type: "boolean",
               default: false,
             },
             recordViewType: {
-              title: 'Records presentation',
-              description: 'Manage the display method for a JSON record type value',
-              type: 'string',
+              title: "Records presentation",
+              description:
+                "Manage the display method for a JSON record type value",
+              type: "string",
               enum: VIEW_TYPES,
-              enumNames: ['Rows', 'Columns'],
+              enumNames: ["Rows", "Columns"],
               default: ViewType.Columns,
             } as JSONSchema,
             arrayViewType: {
-              title: 'Arrays presentation',
+              title: "Arrays presentation",
               description:
-                'Manage the display method for a JSON array type value',
-              type: 'string',
+                "Manage the display method for a JSON array type value",
+              type: "string",
               enum: VIEW_TYPES,
-              enumNames: ['Rows', 'Columns'],
+              enumNames: ["Rows", "Columns"],
               default: ViewType.Rows,
             } as JSONSchema,
             proportionalResizeLimit: {
-              title: 'Proportional increase limit',
+              title: "Proportional increase limit",
               description:
-                'Specifies the relative amount by which the maximum element (height/width) can be increased',
-              type: 'number',
+                "Specifies the relative amount by which the maximum element (height/width) can be increased",
+              type: "number",
               minimum: 0,
               default: 100,
             },
             horizontalReflect: {
-              type: 'boolean',
-              title: 'Reflect horizontally',
+              type: "boolean",
+              title: "Reflect horizontally",
               default: false,
             },
             verticalReflect: {
-              type: 'boolean',
-              title: 'Reflect vertically',
+              type: "boolean",
+              title: "Reflect vertically",
               default: false,
             },
             transpose: {
-              type: 'boolean',
-              title: 'Transpose',
+              type: "boolean",
+              title: "Transpose",
               default: false,
             },
           },
           required: [
-            'recordViewType',
-            'arrayViewType',
-            'proportionalResizeLimit'
+            "recordViewType",
+            "arrayViewType",
+            "proportionalResizeLimit",
           ],
           dependencies: {
             headers: {
@@ -140,17 +138,17 @@ export const TRANSFORM_SCHEMA: JSONSchema = {
                       const: true,
                     },
                     collapseHeaders: {
-                      title: 'Combine nested headers',
-                      description: 'Concatenate headers by dot',
-                      type: 'boolean',
+                      title: "Combine nested headers",
+                      description: "Concatenate headers by dot",
+                      type: "boolean",
                       default: false,
                     },
                     deduplicateHeaders: {
-                      title: 'Remove duplicate headings',
-                      description: 'Removes identical line headers',
-                      type: 'boolean',
+                      title: "Remove duplicate headings",
+                      description: "Removes identical line headers",
+                      type: "boolean",
                       default: true,
-                    }
+                    },
                   },
                   dependencies: {
                     deduplicateHeaders: {
@@ -168,11 +166,11 @@ export const TRANSFORM_SCHEMA: JSONSchema = {
                               const: true,
                             },
                             supportForHeadersGrouping: {
-                              title: 'Support for value grouping',
-                              type: 'boolean',
+                              title: "Support for value grouping",
+                              type: "boolean",
                               default: true,
                             },
-                          }
+                          },
                         },
                       ],
                     },
@@ -188,13 +186,13 @@ export const TRANSFORM_SCHEMA: JSONSchema = {
                       const: true,
                     },
                     collapseIndexes: {
-                      title: 'Combine nested indexes',
+                      title: "Combine nested indexes",
                       description:
-                        'Makes hierarchical indexes for nested strings (1.1, 1.2, ...)',
-                      type: 'boolean',
+                        "Makes hierarchical indexes for nested strings (1.1, 1.2, ...)",
+                      type: "boolean",
                       default: true,
                     },
-                  }
+                  },
                 },
               ],
             },
@@ -203,35 +201,36 @@ export const TRANSFORM_SCHEMA: JSONSchema = {
       ],
     },
   },
-}
+};
 
 export const TRANSFORMED_UI_SCHEMA: UiSchema = {
-  'ui:order': [
-    'preset',
-    'headers',
-    'sortHeaders',
-    'collapseHeaders',
-    'deduplicateHeaders',
-    'supportForHeadersGrouping',
-    'indexes',
-    'collapseIndexes',
-    'concatPrimitiveValues',
-    'mergeRecordValues',
-    'arrayViewType',
-    'recordViewType',
-    'proportionalResizeLimit',
-    'horizontalReflect',
-    'verticalReflect',
-    'transpose',
-    'format',
+  "ui:order": [
+    "preset",
+    "headers",
+    "sortHeaders",
+    "collapseHeaders",
+    "deduplicateHeaders",
+    "supportForHeadersGrouping",
+    "indexes",
+    "collapseIndexes",
+    "concatPrimitiveValues",
+    "mergeRecordValues",
+    "arrayViewType",
+    "recordViewType",
+    "proportionalResizeLimit",
+    "horizontalReflect",
+    "verticalReflect",
+    "transpose",
+    "format",
+    "paginate",
   ],
-}
+};
 
 export type TransformConfig =
   | { preset: Exclude<TransformPreset, TransformPreset.Manual> }
   | ({
-      preset: TransformPreset.Manual
-    } & TransformOptions)
+      preset: TransformPreset.Manual;
+    } & TransformOptions);
 
 export function resolvePreset(config: TransformConfig): TransformOptions {
   switch (config.preset) {
@@ -252,7 +251,7 @@ export function resolvePreset(config: TransformConfig): TransformOptions {
         horizontalReflect: false,
         verticalReflect: false,
         transpose: false,
-      }
+      };
     case TransformPreset.Compact:
       return {
         concatPrimitiveValues: true,
@@ -270,7 +269,7 @@ export function resolvePreset(config: TransformConfig): TransformOptions {
         horizontalReflect: false,
         verticalReflect: false,
         transpose: false,
-      }
+      };
     case TransformPreset.Detailed:
       return {
         concatPrimitiveValues: false,
@@ -288,15 +287,15 @@ export function resolvePreset(config: TransformConfig): TransformOptions {
         horizontalReflect: false,
         verticalReflect: false,
         transpose: false,
-      }
+      };
     case TransformPreset.Manual: {
-      const { preset, ...rest } = config
-      return rest
+      const { preset, ...rest } = config;
+      return rest;
     }
     default:
       throw new Error(
         //@ts-expect-error
         `Unexpected preset "${config.preset ?? JSON.stringify(config)}"`
-      )
+      );
   }
 }
