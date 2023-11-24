@@ -43,20 +43,23 @@ export function toASCIITable(table: Table) {
       if (cell.collIndex === j) {
         xShift[j + 1] = Math.max(
           xShift[j + 1],
-          xShift[j] + Math.max(cell.maxRowLength - cell.cell.width, 0) + 1
+          Math.max(cell.maxRowLength - cell.cell.width, 0) + 1
         );
-      } else {
-        xShift[j + 1] = Math.max(xShift[j + 1], xShift[j]);
       }
       if (cell.rowIndex === i) {
         yShift[i + 1] = Math.max(
           yShift[i + 1],
-          yShift[i] + Math.max(cell.rows.length - cell.cell.height, 0) + 1
+          Math.max(cell.rows.length - cell.cell.height, 0) + 1
         );
-      } else {
-        yShift[i + 1] = Math.max(yShift[i + 1], yShift[i]);
       }
     }
+  }
+  // Accumulate
+  for (let i = 1; i <= table.width; i++) {
+    xShift[i] += xShift[i - 1];
+  }
+  for (let i = 1; i <= table.height; i++) {
+    yShift[i] += yShift[i - 1];
   }
   const height = table.height + yShift[table.height];
   const width = table.width + xShift[table.width];

@@ -33,11 +33,8 @@ export function fromASCIITable(
     for (let j = 0; j < originalWidth; j++) {
       const char = row[j];
       const separatorType = getSeparatorType(char, j, row, i, rows);
-      xShift[j + 1] = Math.max(xShift[j + 1], xShift[j] + (separatorType & 1));
-      yShift[i + 1] = Math.max(
-        yShift[i + 1],
-        yShift[i] + ((separatorType & 2) >> 1)
-      );
+      xShift[j + 1] = Math.max(xShift[j + 1], separatorType & 1);
+      yShift[i + 1] = Math.max(yShift[i + 1], (separatorType & 2) >> 1);
       if (separatorType > 0) {
         continue;
       }
@@ -52,6 +49,13 @@ export function fromASCIITable(
       region.y2 = i;
       regions[i + 1][j + 1] = region;
     }
+  }
+  // Accumulate
+  for (let i = 1; i <= originalWidth; i++) {
+    xShift[i] += xShift[i - 1];
+  }
+  for (let i = 1; i <= originalHeight; i++) {
+    yShift[i] += yShift[i - 1];
   }
   const width = originalWidth - xShift[originalWidth];
   const height = originalHeight - yShift[originalHeight];
@@ -69,12 +73,12 @@ export function fromASCIITable(
   }
   return fromMatrix(
     cleanMatrix,
-    (_, rowIndex) => rowIndex === 0 ? CellType.Header : CellType.Value,
+    (_, rowIndex) => (rowIndex === 0 ? CellType.Header : CellType.Value),
     (cell) => {
       if (cell === null) {
         throw new Error("Invalid table");
       }
       return getContentOfRawCell(rows, cell);
     }
-  )
+  );
 }

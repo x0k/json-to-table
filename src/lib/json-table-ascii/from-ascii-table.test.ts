@@ -29,6 +29,14 @@ describe("fromASCIITable", () => {
       getSimpleMySqlASCIITableSeparatorType
     );
     const ascii = toASCIITable(table);
-    console.log(ascii);
+    expect(`\n${ascii}`).toBe(`
++--------------------------------------------+------------------------+
+|                    Col1                    |          Col3          |
++----------------------------------+---------+------------------------+
+| Value 1                          | Value 2 | 123                    |
+|                                  |         | with a tab or 4 spaces |
++----------------------------------+---------+                        |
+| This is a row with only one cell |         |                        |
++----------------------------------+---------+------------------------+`);
   });
 });

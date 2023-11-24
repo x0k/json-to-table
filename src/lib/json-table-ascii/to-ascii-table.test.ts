@@ -18,13 +18,55 @@ describe("toASCIITable", () => {
         ],
       ],
     };
-    const ascii = toASCIITable(table)
-    console.log(ascii)
+    const ascii = toASCIITable(table);
     expect(`\n${ascii}`).toBe(
       `
 +---+
 | a |
 +---+`
     );
+  });
+  it("Should't strip cell values", () => {
+    const table: Table = {
+      height: 2,
+      width: 2,
+      rows: [
+        [
+          {
+            type: CellType.Header,
+            height: 1,
+            width: 1,
+            value: "name",
+          },
+          {
+            type: CellType.Header,
+            height: 1,
+            width: 1,
+            value: "private",
+          },
+        ],
+        [
+          {
+            type: CellType.Value,
+            height: 1,
+            width: 1,
+            value: "json-to-table",
+          },
+          {
+            type: CellType.Value,
+            height: 1,
+            width: 1,
+            value: "true",
+          },
+        ],
+      ],
+    };
+    const ascii = toASCIITable(table);
+    expect(`\n${ascii}`).toBe(`
++---------------+---------+
+|     name      | private |
++---------------+---------+
+| json-to-table | true    |
++---------------+---------+`);
   });
 });
