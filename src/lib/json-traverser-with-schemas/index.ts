@@ -1,14 +1,14 @@
 import { UiSchema } from '@rjsf/utils'
 import mergeAllOf from 'json-schema-merge-allof'
 
-import { isArray, isSomething, isRecord } from 'lib/guards'
-import { JSONPrimitive, JSONRecord, JSONType } from 'lib/json'
-import { JSONSchema, makeValidator } from 'lib/json-schema'
-import { omit } from 'lib/record'
-import { apply } from 'lib/function'
+import { isArray, isSomething, isRecord } from '@/lib/guards'
+import { JSONPrimitiveOrNull, JSONRecord, JSONValue } from '@/lib/json'
+import { JSONSchema, makeValidator } from '@/lib/json-schema'
+import { omit } from '@/lib/record'
+import { apply } from '@/lib/function'
 
 export interface VisitorOptions<R> {
-  value: JSONPrimitive | Array<R> | Record<string, R>
+  value: JSONPrimitiveOrNull | Array<R> | Record<string, R>
   schema: JSONSchema
   uiSchema: UiSchema
   resolvedSchema: JSONSchema
@@ -71,7 +71,7 @@ function mergeJsonSchemas(x: JSONSchema, y: JSONSchema): JSONSchema {
 }
 
 export function resolveSchemas(
-  value: JSONType,
+  value: JSONValue,
   schema: JSONSchema,
   uiSchema: UiSchema
 ): [JSONSchema, UiSchema] {
@@ -167,13 +167,13 @@ export type TraverserOptions<R> = Omit<
 
 export function jsonTraverserWithSchemas<R>(
   visitor: Visitor<R>
-): (options: TraverserOptions<JSONType>) => R {
+): (options: TraverserOptions<JSONValue>) => R {
   const traverser = ({
     value,
     schema,
     uiSchema,
     path,
-  }: TraverserOptions<JSONType>): R => {
+  }: TraverserOptions<JSONValue>): R => {
     const [resolvedSchema, resolvedUiSchema] = resolveSchemas(
       value,
       schema,

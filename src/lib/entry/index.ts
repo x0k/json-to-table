@@ -1,4 +1,4 @@
-import { isArray, isString } from 'lib/guards'
+import { isArray, isString } from '@/lib/guards'
 
 export type Entry<V> = [string, V]
 

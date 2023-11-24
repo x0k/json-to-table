@@ -1,7 +1,7 @@
-import { generate, isItemsEqual } from 'lib/array'
-import { isSomething } from 'lib/guards'
-import { JSONArray, compareJsonArray, JSONType } from 'lib/json'
-import { gcd, min } from 'lib/math'
+import { generate, isItemsEqual } from '@/lib/array'
+import { isSomething } from '@/lib/guards'
+import { JSONArray, compareJsonArray, JSONValue } from '@/lib/json'
+import { gcd, min } from '@/lib/math'
 
 import {
   Table,
@@ -22,7 +22,7 @@ import { createMatrix, fromMatrix } from './matrix'
 
 function getDeduplicationInterval(
   { indexOfLastRowWithLegitHeader, structures }: Table & TableMeta,
-  candidate: JSONType[][]
+  candidate: JSONValue[][]
 ): DeduplicationInterval | null {
   let start = 0
   while (

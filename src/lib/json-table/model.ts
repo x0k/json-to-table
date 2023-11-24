@@ -1,4 +1,4 @@
-import { JSONArray, JSONPrimitive, JSONType } from 'lib/json'
+import { JSONArray, JSONPrimitiveOrNull, JSONValue } from '@/lib/json'
 
 export enum ViewType {
   Rows = 'rows',
@@ -55,14 +55,14 @@ export enum CellType {
 
 export const HEADER_CELL_TYPES = [CellType.Header, CellType.Index]
 
-export interface Cell<V = JSONPrimitive> extends Block {
+export interface Cell<V = JSONPrimitiveOrNull> extends Block {
   type: CellType
   value: V
 }
 
-export type Row<V = JSONPrimitive> = Cell<V>[]
+export type Row<V = JSONPrimitiveOrNull> = Cell<V>[]
 
-export interface Table<V = JSONPrimitive> extends Block {
+export interface Table<V = JSONPrimitiveOrNull> extends Block {
   rows: Row<V>[]
 }
 
@@ -75,7 +75,7 @@ export type BuildRowStructure = (row: Row, multiplier: number) => JSONArray
 
 export type ComposeTables = (tables: Table[]) => Table
 
-export type TableFactory = (value: JSONType) => Table
+export type TableFactory = (value: JSONValue) => Table
 
 export type SplitIntoColumnsByHeaders = (
   Table: Table,
@@ -86,7 +86,7 @@ export type SplitIntoColumnsByHeaders = (
 export interface TableMeta {
   indexOfLastRowWithLegitHeader: number
   multiplier: number
-  structures: JSONType[][]
+  structures: JSONValue[][]
 }
 
 export interface DeduplicationIntervalsCandidate {

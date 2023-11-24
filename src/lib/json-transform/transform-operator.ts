@@ -1,5 +1,5 @@
-import { flow } from 'lib/function'
-import { jsonTraverser } from 'lib/json-traverser'
+import { flow } from '@/lib/function'
+import { jsonTraverser } from '@/lib/json-traverser'
 
 import { TransformAction, TransformInput } from './model'
 import {

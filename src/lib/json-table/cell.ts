@@ -1,8 +1,8 @@
-import { JSONPrimitive } from 'lib/json'
+import { JSONPrimitiveOrNull } from '@/lib/json'
 
 import { Table, CellType } from './model'
 
-export function makeCell(value: JSONPrimitive): Table {
+export function makeCell(value: JSONPrimitiveOrNull): Table {
   return {
     height: 1,
     width: 1,

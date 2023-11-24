@@ -3,10 +3,10 @@ import {
   horizontalMirror,
   transpose,
   verticalMirror,
-} from 'lib/array'
-import { isNumber, isRecord, isArray } from 'lib/guards'
-import { isJsonPrimitive, JSONArray, JSONRecord, JSONType } from 'lib/json'
-import { lcm, max, sum } from 'lib/math'
+} from '@/lib/array'
+import { isNumber, isRecord, isArray } from '@/lib/guards'
+import { isJsonPrimitiveOrNull, JSONArray, JSONRecord, JSONValue } from '@/lib/json'
+import { lcm, max, sum } from '@/lib/math'
 
 import {
   CellType,
@@ -190,13 +190,13 @@ export function makeTableTransformer({
     return { titles, tables, viewType: recordViewType }
   }
 
-  function transformData(value: JSONType): Table {
+  function transformData(value: JSONValue): Table {
     const isArr = isArray(value)
-    return isJsonPrimitive(value)
+    return isJsonPrimitiveOrNull(value)
       ? makeCell(value)
       : Object.keys(value).length === 0
       ? makeCell('')
-      : isArr && concatPrimitiveValues && value.every(isJsonPrimitive)
+      : isArr && concatPrimitiveValues && value.every(isJsonPrimitiveOrNull)
       ? makeCell(value.join(', '))
       : mergeTables(
           isArr &&
@@ -210,7 +210,7 @@ export function makeTableTransformer({
         )
   }
 
-  return (value: JSONType): Table => {
+  return (value: JSONValue): Table => {
     const table = transformData(value)
     if (useTranspose || horizontalReflect || verticalReflect) {
       let matrix = createMatrix(table, ({ type, value }) => ({ type, value }))

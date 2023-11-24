@@ -1,12 +1,12 @@
-import { JSONType } from 'lib/json'
-import { isFunction } from 'lib/guards'
+import { JSONValue } from '@/lib/json'
+import { isFunction } from '@/lib/guards'
 
 import { TransformResolver, TransformAction } from '../model'
 
 export interface TransformLoggerOptions {
   value: TransformAction
-  context: JSONType
-  result: JSONType
+  context: JSONValue
+  result: JSONValue
 }
 
 export function loggerResolver(

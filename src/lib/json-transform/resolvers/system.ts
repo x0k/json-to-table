@@ -1,7 +1,7 @@
-import { isRecord, isString } from 'lib/guards'
-import { JSONType } from 'lib/json'
-import { makeEntriesTransform, transformValue } from 'lib/entry'
-import { map } from 'lib/array'
+import { isRecord, isString } from '@/lib/guards'
+import { JSONValue } from '@/lib/json'
+import { makeEntriesTransform, transformValue } from '@/lib/entry'
+import { map } from '@/lib/array'
 
 import {
   TransformActionOrData,
@@ -34,7 +34,7 @@ export interface SystemGetAction extends SystemAction<SystemActionType.Get> {
 
 export interface SystemCallAction extends SystemAction<SystemActionType.Call> {
   function: string
-  argument?: JSONType | TransformAction
+  argument?: JSONValue | TransformAction
 }
 
 export type SystemActions =
@@ -57,7 +57,7 @@ function isSystemAction(
 }
 
 export interface SystemScope {
-  constants: Record<string, JSONType>
+  constants: Record<string, JSONValue>
   functions: Record<string, TransformAction>
 }
 
@@ -85,7 +85,7 @@ export function systemResolver(
       (context) => {
         const evalConstants = makeEntriesTransform<
           TransformActionOrData,
-          JSONType
+          JSONValue
         >(map(transformValue(evalOrReturn(context))))
         stack.push(
           mergeSystemScopes(stack[currentScopeIndex++], {

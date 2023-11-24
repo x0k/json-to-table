@@ -1,17 +1,17 @@
 import { Cell as ExcelCell, Column, Row, Workbook } from 'exceljs'
 
-import { generate, Matrix } from 'lib/array'
+import { generate, Matrix } from '@/lib/array'
 import {
   Table,
   createMatrix,
   fromMatrix,
   isHeaderOrIndexCellType,
   Cell
-} from 'lib/json-table'
-import { isNumber, isString } from 'lib/guards'
-import { max, sum } from 'lib/math'
-import { Entry } from 'lib/entry'
-import { JSONPrimitive } from 'lib/json'
+} from '@/lib/json-table'
+import { isNumber, isString } from '@/lib/guards'
+import { max, sum } from '@/lib/math'
+import { Entry } from '@/lib/entry'
+import { JSONPrimitiveOrNull } from '@/lib/json'
 
 export interface MatrixData {
   cell: Cell
@@ -72,7 +72,7 @@ export type MakeWorkBookOptions = Partial<
     modifyRow: (row: Row, rowIndex: number) => void
     modifyCell: (
       sheetCell: ExcelCell,
-      matrixCell: Cell<{ value: JSONPrimitive; col: number; row: number }>,
+      matrixCell: Cell<{ value: JSONPrimitiveOrNull; col: number; row: number }>,
       matrixCellIndex: number
     ) => void
   }

@@ -1,11 +1,11 @@
-import { JSONPrimitive, JSONType } from 'lib/json'
+import { JSONPrimitiveOrNull, JSONValue } from '@/lib/json'
 
-export type TransformAction = (context: JSONType) => JSONType
+export type TransformAction = (context: JSONValue) => JSONValue
 
-export type TransformActionOrData = JSONType | TransformAction
+export type TransformActionOrData = JSONValue | TransformAction
 
 export type ResolvedTransformData =
-  | JSONPrimitive
+  | JSONPrimitiveOrNull
   | TransformAction
   | ResolvedTransformData[]
   | { [k: string]: ResolvedTransformData }
