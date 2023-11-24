@@ -18,7 +18,9 @@ describe("toASCIITable", () => {
         ],
       ],
     };
-    expect(`\n${toASCIITable(table)}`).toBe(
+    const ascii = toASCIITable(table)
+    console.log(ascii)
+    expect(`\n${ascii}`).toBe(
       `
 +---+
 | a |

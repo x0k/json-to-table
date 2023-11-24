@@ -50,33 +50,26 @@ export function toASCIITable(table: Table) {
   const placed = new Set<Cell>();
   for (let i = 0; i < table.height; i++) {
     for (let j = 0; j < table.width; j++) {
-      const { cell, rows, maxRowLength } = inputMatrix[i][j];
+      const { cell, rows } = inputMatrix[i][j];
       if (placed.has(cell)) {
         continue;
       }
       placed.add(cell);
       const rowIndex = i + yShift[i];
       const colIndex = j + xShift[j];
-      const h =
-        Math.max(cell.height, rows.length) +
-        yShift[i + cell.height] -
-        yShift[i] -
-        1;
-      const w =
-        Math.max(cell.width, maxRowLength) +
-        xShift[j + cell.width] -
-        xShift[j] -
-        1;
+      const h = cell.height + yShift[i + cell.height] - yShift[i] - 1;
+      const w = cell.width + xShift[j + cell.width] - xShift[j] - 1;
       for (let y = 0; y < h; y++) {
         // TODO: Pad depending on type of cell and content
+        const c = y + rowIndex;
         if (y < rows.length) {
           const row = rows[y].padEnd(w, " ");
           for (let x = 0; x < w; x++) {
-            outMatrix[y + rowIndex][x + colIndex] = row[x];
+            outMatrix[c][x + colIndex] = row[x];
           }
         } else {
           for (let x = 0; x < w; x++) {
-            outMatrix[y + rowIndex][x + colIndex] = " ";
+            outMatrix[c][x + colIndex] = " ";
           }
         }
       }

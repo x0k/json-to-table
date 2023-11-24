@@ -1,13 +1,10 @@
-import { getSimpleMySqlASCIITableSeparatorType } from './core';
-import {
-  fromASCIITableWithBottomRightShift,
-  fromASCIITableWithLeftTopShift,
-} from "./from-ascii-table";
-import { toASCIITable } from './to-ascii-table';
+import { getSimpleMySqlASCIITableSeparatorType } from "./core";
+import { fromASCIITable } from "./from-ascii-table";
+import { toASCIITable } from "./to-ascii-table";
 
 describe("fromASCIITable", () => {
   it("Should work with simple table", () => {
-    const { value } = fromASCIITableWithBottomRightShift(
+    const { value } = fromASCIITable(
       `
 +---+
 | a |
@@ -19,7 +16,7 @@ describe("fromASCIITable", () => {
   });
 
   it("Should work with complex table", () => {
-    const table = fromASCIITableWithBottomRightShift(
+    const table = fromASCIITable(
       `
 +--------------------------------------------+------------------------+
 |                      Col1                  |          Col3          |
@@ -31,7 +28,7 @@ describe("fromASCIITable", () => {
       `,
       getSimpleMySqlASCIITableSeparatorType
     );
-  const ascii = toASCIITable(table);
-  console.log(ascii);
+    const ascii = toASCIITable(table);
+    console.log(ascii);
   });
 });

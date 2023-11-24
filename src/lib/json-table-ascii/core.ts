@@ -86,7 +86,7 @@ export function printRawMatrix(matrix: Matrix<RawCell>) {
   }
 }
 
-function omitEmptyLines(rows: string[]) {
+export function omitEmptyLines(rows: string[]) {
   let l = 0;
   while (l < rows.length) {
     if (rows[l].trim() === "") {
@@ -103,28 +103,4 @@ export function getMaxLineLength(rows: string[]) {
     max = Math.max(max, rows[i].length);
   }
   return max;
-}
-
-export function prepareRows(ascii: string) {
-  const rows = ascii.split("\n");
-  omitEmptyLines(rows);
-  const originalHeight = rows.length;
-  const originalWidth = getMaxLineLength(rows);
-  const xShiftMatrix = generate(originalHeight, () =>
-    generate(originalWidth + 1, () => 0)
-  );
-  const yShiftMatrix = generate(originalHeight + 1, () =>
-    generate(originalWidth, () => 0)
-  );
-  const regions = generate(originalHeight + 1, () =>
-    generate<RawCell>(originalWidth + 1, () => null)
-  );
-  return {
-    rows,
-    originalHeight,
-    originalWidth,
-    xShiftMatrix,
-    yShiftMatrix,
-    regions,
-  };
 }
