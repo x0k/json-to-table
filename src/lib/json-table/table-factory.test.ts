@@ -41,11 +41,38 @@ describe("makeTableFactory", () => {
 `);
   });
 
-  it("Should create table for arrays", () => {
+  it("Should create table for arrays with strict collapse", () => {
     const data = [1, 2, [11, 22]];
     const table = factory(data);
     const ascii = toASCIITable(table);
-    console.log(ascii);
-    // expect(`\n${ascii}\n`).toBe(``)
-  })
+    expect(`\n${ascii}\n`).toBe(`
++---+--------+
+| 1 |      1 |
++---+--------+
+| 2 |      2 |
++---+---+----+
+|   | 1 | 11 |
+| 3 +---+----+
+|   | 2 | 22 |
++---+---+----+
+`);
+  });
+
+  it("Should create table for arrays with partial collapse", () => {
+    factory = makeTableFactory({ collapseIndexes: "partial" });
+    const data = [1, 2, [11, 22]];
+    const table = factory(data);
+    const ascii = toASCIITable(table);
+    expect(`\n${ascii}\n`).toBe(`
++-----+----+
+|  1  |  1 |
++-----+----+
+|  2  |  2 |
++-----+----+
+| 3.1 | 11 |
++-----+----+
+| 3.2 | 22 |
++-----+----+
+`);
+  });
 });

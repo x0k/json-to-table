@@ -56,6 +56,7 @@ export function makeIndexesSetter(collapseIndexes: boolean) {
               {
                 ...cell,
                 value: `${titles[i]}.${cell.value}`,
+                // canCollapse is always true?
                 width: canCollapse ? cell.width : cell.width + 1,
               },
               ...row.slice(1),
