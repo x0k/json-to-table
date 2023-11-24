@@ -1,7 +1,7 @@
 import { CellType, Table } from '@/lib/json-table'
 import { max, sum } from '@/lib/math'
 
-import { calculateSheetData } from './index'
+import { calculateSheetData } from './json-table-xlsx'
 
 describe('json-table-xlsx', () => {
   describe('calculateSheetData', () => {

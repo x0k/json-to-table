@@ -1,6 +1,7 @@
 import { Cell as ExcelCell, Column, Row, Workbook } from 'exceljs'
 
-import { generate, Matrix } from '@/lib/array'
+import { generate } from '@/lib/array'
+import { Matrix } from '@/lib/matrix'
 import {
   Table,
   createMatrix,

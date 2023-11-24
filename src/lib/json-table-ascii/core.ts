@@ -1,4 +1,4 @@
-import { Matrix, generate } from "@/lib/array";
+import { Matrix } from "@/lib/matrix";
 
 export enum SeparatorType {
   None = 0,
