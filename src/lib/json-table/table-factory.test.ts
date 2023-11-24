@@ -1,14 +1,10 @@
 import { toASCIITable } from "../json-table-ascii/to-ascii-table";
 
-import { TableFactory } from "./model";
 import { makeTableFactory } from "./table-factory";
+import simpleHeadersDuplication from "./__fixtures__/simple-headers-duplication.json";
 
 describe("makeTableFactory", () => {
-  let factory: TableFactory;
-
-  beforeEach(() => {
-    factory = makeTableFactory({});
-  });
+  const factory = makeTableFactory({});
 
   it("Should create table for primitives", () => {
     const data = [false, 12345, "abcde"];
@@ -41,7 +37,7 @@ describe("makeTableFactory", () => {
 `);
   });
 
-  it("Should create table for arrays with strict collapse", () => {
+  it("Should create table for arrays", () => {
     const data = [1, 2, [11, 22]];
     const table = factory(data);
     const ascii = toASCIITable(table);
@@ -58,11 +54,13 @@ describe("makeTableFactory", () => {
 `);
   });
 
-  it("Should create table for arrays with partial collapse", () => {
-    factory = makeTableFactory({ collapseIndexes: "partial" });
+  it("Should create table for arrays with indexes collapse", () => {
+    const factory = makeTableFactory({ collapseIndexes: true });
     const data = [1, 2, [11, 22]];
     const table = factory(data);
+    console.log(JSON.stringify(table));
     const ascii = toASCIITable(table);
+    console.log(ascii);
     expect(`\n${ascii}\n`).toBe(`
 +-----+----+
 |  1  |  1 |
@@ -73,6 +71,23 @@ describe("makeTableFactory", () => {
 +-----+----+
 | 3.2 | 22 |
 +-----+----+
+`);
+  });
+
+  it("Should deduplicate table headers", () => {
+    const table = factory(simpleHeadersDuplication);
+    const ascii = toASCIITable(table);
+    console.log(ascii);
+    expect(`\n${ascii}\n`).toBe(`
++---+---+---+---+
+| № | a | b | c |
++---+---+---+---+
+| 1 | 1 | 2 | 3 |
++---+---+---+---+
+| 2 | 4 | 5 | 6 |
++---+---+---+---+
+| 3 | 7 | 8 | 9 |
++---+---+---+---+
 `);
   });
 });

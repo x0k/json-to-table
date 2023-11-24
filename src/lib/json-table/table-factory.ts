@@ -4,12 +4,11 @@ import {
   JSONValue,
   isJsonPrimitiveOrNull,
 } from "@/lib/json";
-import { isRecord } from "@/lib/guards";
+import { isNumber, isRecord } from "@/lib/guards";
 import { array } from "@/lib/array";
 import { lcm, max, sum } from "@/lib/math";
 
 import {
-  Cell,
   CellType,
   Row,
   Table,
@@ -19,6 +18,14 @@ import {
   getWidth,
 } from "./model";
 import { makeOneCellTable } from "./one-cell-table";
+import { makeRowStructureBuilder } from "./row";
+import {
+  makeIntervalsDeduplicator,
+  makeLevelDeduplicator,
+  makeSplitIntoColumnsByHeaders,
+  makeTableHeadersDeduplicatorByIntervals,
+  makeTableHeadersDeduplicatorByLevel,
+} from "./deduplication";
 
 export interface TableFactoryOptions {
   joinPrimitiveArrayValues?: boolean;
@@ -29,7 +36,9 @@ export interface TableFactoryOptions {
   omitHeaders?: boolean;
   collapseHeaders?: boolean;
   omitIndexes?: boolean;
-  collapseIndexes?: false | "strict" | "partial";
+  collapseIndexes?: boolean;
+  deduplicateHeaders?: boolean;
+  supportForHeadersGrouping?: boolean;
   /** proportional size adjustment threshold */
   proportionalSizeAdjustmentThreshold?: number;
 }
@@ -45,38 +54,15 @@ function isIndexedTable(table: Table) {
   return true;
 }
 
-function addPartiallyCollapsedIndex(table: Table, index: string) {
-  if (!isIndexedTable(table)) {
-    return {
-      height: table.height,
-      width: table.width + 1,
-      rows: [
-        [
-          {
-            type: CellType.Index,
-            height: table.height,
-            width: 1,
-            value: index,
-          },
-          ...table.rows[0],
-        ],
-        ...table.rows.slice(1),
-      ],
-    };
-  }
-  const newRows = table.rows.slice();
-  let p = 0;
-  while (p < table.height) {
-    newRows[p] = [
-      {
-        ...newRows[p][0],
-        value: `${index}.${newRows[p][0].value}`,
-      },
-      ...newRows[p].slice(1),
-    ];
-    p += table.rows[p][0].height;
-  }
-  return { ...table, rows: newRows };
+function collapseCellIndex(rows: Row[], p: number, titles: string) {
+  rows[p] = [
+    {
+      ...rows[p][0],
+      value: `${titles}.${rows[p][0].value}`,
+    },
+    ...rows[p].slice(1),
+  ];
+  return rows[p][0].height;
 }
 
 export function makeTableFactory({
@@ -85,53 +71,54 @@ export function makeTableFactory({
   omitHeaders,
   collapseHeaders,
   omitIndexes,
-  collapseIndexes = "strict",
+  collapseIndexes,
   arrayViewType = ViewType.Indexes,
   recordViewType = ViewType.Headers,
   proportionalSizeAdjustmentThreshold = 1,
+  deduplicateHeaders = true,
+  supportForHeadersGrouping,
 }: TableFactoryOptions): TableFactory {
-  const isPartialCollapse = collapseIndexes === "partial";
+  const buildRowStructure = makeRowStructureBuilder(!omitIndexes);
+  const getDeduplicateLevel = makeLevelDeduplicator(buildRowStructure);
+  const getDeduplicationIntervals =
+    makeIntervalsDeduplicator(buildRowStructure);
 
-  function addIndexes(
-    { height, rows, width }: Table,
-    titles: string[],
-    originalTables: Table[]
-  ) {
-    const canCollapse = collapseIndexes && originalTables.every(isIndexedTable);
-    const newRows = rows.slice();
-    let h = 0;
-    for (let i = 0; i < originalTables.length; i++) {
-      const height = originalTables[i].height;
-      if (canCollapse) {
-        let p = 0;
-        while (p < height) {
-          const hp = h + p;
-          newRows[hp] = [
+  const splitIntoColumnsByHeaders = makeSplitIntoColumnsByHeaders(
+    stackTablesHorizontally
+  );
+  const deduplicateTableHeadersByLevel = makeTableHeadersDeduplicatorByLevel(
+    splitIntoColumnsByHeaders
+  );
+  const deduplicateTableHeadersByIntervals =
+    makeTableHeadersDeduplicatorByIntervals(splitIntoColumnsByHeaders);
+
+  function addIndex(table: Table, index: string) {
+    if (!collapseIndexes || !isIndexedTable(table)) {
+      return {
+        height: table.height,
+        width: table.width + 1,
+        rows: [
+          [
             {
-              ...newRows[hp][0],
-              value: `${titles[i]}.${newRows[hp][0].value}`,
+              type: CellType.Index,
+              height: table.height,
+              width: 1,
+              value: index,
             },
-            ...newRows[hp].slice(1),
-          ];
-          p += originalTables[i].rows[p][0].height;
-        }
-      } else {
-        const index: Cell = {
-          type: CellType.Index,
-          value: titles[i],
-          height,
-          width: 1,
-        };
-        newRows[h] = [index, ...newRows[h]];
-      }
-      h += height;
+            ...table.rows[0],
+          ],
+          ...table.rows.slice(1),
+        ],
+      };
     }
-    return {
-      height,
-      width: width + Number(!canCollapse),
-      rows: newRows,
-    };
+    const newRows = table.rows.slice();
+    let p = 0;
+    while (p < table.height) {
+      p += collapseCellIndex(newRows, p, index);
+    }
+    return { ...table, rows: newRows };
   }
+
   function addHeaders(
     { height, width, rows }: Table,
     titles: string[],
@@ -221,21 +208,19 @@ export function makeTableFactory({
       rows,
     };
   }
-  function stackTablesVertically(tables: Table[]): Table {
+  function makeTableWidthScaler(tables: Table[]) {
     const widths = tables.map(getWidth);
     const lcmWidth = widths.reduce(lcm);
     const maxWidth = widths.reduce(max);
     const isProportionalResize =
       (lcmWidth - maxWidth) / maxWidth <= proportionalSizeAdjustmentThreshold;
     const width = isProportionalResize ? lcmWidth : maxWidth;
-    const height = tables.map(getHeight).reduce(sum);
-    const rows: Row[] = [];
-    for (let i = 0; i < tables.length; i++) {
-      const {
-        rows: tableRows,
-        width: tableWidth,
-        height: tableHeight,
-      } = tables[i];
+    function scaleTableRows({
+      rows: tableRows,
+      width: tableWidth,
+      height: tableHeight,
+    }: Table) {
+      const rows: Row[] = [];
       const multiplier = Math.floor(width / tableWidth);
       const plugWidth =
         !isProportionalResize && width - tableWidth * multiplier;
@@ -259,7 +244,32 @@ export function makeTableFactory({
         }
         rows.push(newRow);
       }
+      return rows;
     }
+    return {
+      scaleTableRows,
+      isProportionalResize,
+      width,
+    };
+  }
+  function stackTablesVertically(tables: Table[]): Table {
+    const { scaleTableRows, isProportionalResize, width } =
+      makeTableWidthScaler(tables);
+    const deduplicateLevel =
+      isProportionalResize &&
+      !omitHeaders &&
+      deduplicateHeaders &&
+      tables.length > 1 &&
+      (supportForHeadersGrouping
+        ? getDeduplicationIntervals
+        : getDeduplicateLevel)(tables, width);
+    const finalTables = deduplicateLevel
+      ? isNumber(deduplicateLevel)
+        ? deduplicateTableHeadersByLevel(tables, deduplicateLevel)
+        : deduplicateTableHeadersByIntervals(tables, deduplicateLevel)
+      : tables;
+    const height = finalTables.map(getHeight).reduce(sum);
+    const rows = finalTables.flatMap(scaleTableRows);
     return {
       width,
       height,
@@ -276,12 +286,19 @@ export function makeTableFactory({
         if (omitIndexes) {
           return stackTablesVertically(tables);
         }
-        if (isPartialCollapse) {
-          return stackTablesVertically(
-            tables.map((t, i) => addPartiallyCollapsedIndex(t, titles[i]))
-          );
-        }
-        return addIndexes(stackTablesVertically(tables), titles, tables);
+        const { scaleTableRows, width } = makeTableWidthScaler(tables);
+        return stackTablesVertically(
+          tables.map(scaleTableRows).map((rows, i) =>
+            addIndex(
+              {
+                width,
+                rows,
+                height: rows.length,
+              },
+              titles[i]
+            )
+          )
+        );
       }
       case ViewType.Headers: {
         const stacked = stackTablesHorizontally(tables);
