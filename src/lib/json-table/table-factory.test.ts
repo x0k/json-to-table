@@ -41,6 +41,7 @@ describe("makeTableFactory", () => {
     const data = [1, 2, [11, 22]];
     const table = factory(data);
     const ascii = toASCIITable(table);
+    console.log(ascii);
     expect(`\n${ascii}\n`).toBe(`
 +---+--------+
 | 1 |      1 |

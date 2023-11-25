@@ -13,6 +13,7 @@ import {
   Row,
   Table,
   TableFactory,
+  TableWithMeta,
   ViewType,
   getHeight,
   getWidth,
@@ -119,19 +120,30 @@ export function makeTableFactory({
     return { ...table, rows: newRows };
   }
 
+  function addIndexes(
+    { height, width, rows, tables, header }: TableWithMeta,
+    titles: string[]
+  ) {
+    const isFullyCollapsible = collapseIndexes && tables.every(isIndexedTable);
+    const newRows = rows.slice();
+    if (isFullyCollapsible) {
+    } else {
+      
+    }
+  }
+
   function addHeaders(
-    { height, width, rows }: Table,
-    titles: string[],
-    originalTables: Table[]
+    { height, width, rows, tables }: TableWithMeta,
+    titles: string[]
   ) {
     const headersRow: Row = [];
     if (
       collapseHeaders &&
       rows[0].every((cell) => cell.type === CellType.Header)
     ) {
-      for (let i = 0; i < originalTables.length; i++) {
-        for (let j = 0; j < originalTables[i].rows[0].length; j++) {
-          const cell = originalTables[i].rows[0][j];
+      for (let i = 0; i < tables.length; i++) {
+        for (let j = 0; j < tables[i].rows[0].length; j++) {
+          const cell = tables[i].rows[0][j];
           headersRow.push({
             ...cell,
             value: `${titles[i]}.${cell.value}`,
@@ -144,10 +156,10 @@ export function makeTableFactory({
         rows: [headersRow, ...rows.slice(1)],
       };
     }
-    for (let i = 0; i < originalTables.length; i++) {
+    for (let i = 0; i < tables.length; i++) {
       headersRow.push({
         type: CellType.Header,
-        width: originalTables[i].width,
+        width: tables[i].width,
         value: titles[i],
         height: 1,
       });
@@ -158,7 +170,7 @@ export function makeTableFactory({
       rows: [headersRow, ...rows],
     };
   }
-  function stackTablesHorizontally(tables: Table[]): Table {
+  function stackTablesHorizontally(tables: Table[]): TableWithMeta {
     const width = tables.map(getWidth).reduce(sum);
     const heights = tables.map(getHeight);
     const lcmHeight = heights.reduce(lcm);
@@ -206,21 +218,37 @@ export function makeTableFactory({
       width,
       height,
       rows,
+      tables,
     };
   }
-  function makeTableWidthScaler(tables: Table[]) {
+  function stackTablesVertically(tables: Table[]): TableWithMeta {
     const widths = tables.map(getWidth);
     const lcmWidth = widths.reduce(lcm);
     const maxWidth = widths.reduce(max);
     const isProportionalResize =
       (lcmWidth - maxWidth) / maxWidth <= proportionalSizeAdjustmentThreshold;
     const width = isProportionalResize ? lcmWidth : maxWidth;
-    function scaleTableRows({
-      rows: tableRows,
-      width: tableWidth,
-      height: tableHeight,
-    }: Table) {
-      const rows: Row[] = [];
+    const deduplicateLevel =
+      isProportionalResize &&
+      !omitHeaders &&
+      deduplicateHeaders &&
+      tables.length > 1 &&
+      (supportForHeadersGrouping
+        ? getDeduplicationIntervals
+        : getDeduplicateLevel)(tables, width);
+    const finalTables = deduplicateLevel
+      ? isNumber(deduplicateLevel)
+        ? deduplicateTableHeadersByLevel(tables, deduplicateLevel)
+        : deduplicateTableHeadersByIntervals(tables, deduplicateLevel)
+      : tables;
+    const height = finalTables.map(getHeight).reduce(sum);
+    const rows: Row[] = [];
+    for (let i = 0; i < finalTables.length; i++) {
+      const {
+        rows: tableRows,
+        width: tableWidth,
+        height: tableHeight,
+      } = finalTables[i];
       const multiplier = Math.floor(width / tableWidth);
       const plugWidth =
         !isProportionalResize && width - tableWidth * multiplier;
@@ -244,36 +272,12 @@ export function makeTableFactory({
         }
         rows.push(newRow);
       }
-      return rows;
     }
-    return {
-      scaleTableRows,
-      isProportionalResize,
-      width,
-    };
-  }
-  function stackTablesVertically(tables: Table[]): Table {
-    const { scaleTableRows, isProportionalResize, width } =
-      makeTableWidthScaler(tables);
-    const deduplicateLevel =
-      isProportionalResize &&
-      !omitHeaders &&
-      deduplicateHeaders &&
-      tables.length > 1 &&
-      (supportForHeadersGrouping
-        ? getDeduplicationIntervals
-        : getDeduplicateLevel)(tables, width);
-    const finalTables = deduplicateLevel
-      ? isNumber(deduplicateLevel)
-        ? deduplicateTableHeadersByLevel(tables, deduplicateLevel)
-        : deduplicateTableHeadersByIntervals(tables, deduplicateLevel)
-      : tables;
-    const height = finalTables.map(getHeight).reduce(sum);
-    const rows = finalTables.flatMap(scaleTableRows);
     return {
       width,
       height,
       rows,
+      tables: finalTables,
     };
   }
   function mergeTables(
@@ -283,26 +287,13 @@ export function makeTableFactory({
   ): Table {
     switch (viewType) {
       case ViewType.Indexes: {
-        if (omitIndexes) {
-          return stackTablesVertically(tables);
-        }
-        const { scaleTableRows, width } = makeTableWidthScaler(tables);
-        return stackTablesVertically(
-          tables.map(scaleTableRows).map((rows, i) =>
-            addIndex(
-              {
-                width,
-                rows,
-                height: rows.length,
-              },
-              titles[i]
-            )
-          )
-        );
+        const stacked = stackTablesVertically(tables);
+        // TODO: Implement indexes
+        return omitIndexes ? stacked : stacked;
       }
       case ViewType.Headers: {
         const stacked = stackTablesHorizontally(tables);
-        return omitHeaders ? stacked : addHeaders(stacked, titles, tables);
+        return omitHeaders ? stacked : addHeaders(stacked, titles);
       }
       default:
         throw new Error(`Unknown view type: ${viewType}`);

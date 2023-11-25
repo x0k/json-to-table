@@ -68,9 +68,16 @@ export interface Cell<V = JSONPrimitiveOrNull> extends Block {
 
 export type Row<V = JSONPrimitiveOrNull> = Cell<V>[];
 
+export interface TableMeta2 {
+  header?: Block
+  tables: Table[]
+}
+
 export interface Table<V = JSONPrimitiveOrNull> extends Block {
   rows: Row<V>[];
 }
+
+export interface TableWithMeta extends Table, TableMeta2 {}
 
 export const getHeight = ({ height }: Height): number => height;
 export const getWidth = ({ width }: Width): number => width;
