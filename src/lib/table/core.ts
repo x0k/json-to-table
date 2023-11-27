@@ -10,8 +10,16 @@ export interface Width {
 
 export interface Sized extends Height, Width {}
 
+export enum CellType {
+  Header = "header",
+  Index = "index",
+  Value = "value",
+  Corner = "corner",
+}
+
 export interface Cell<V = JSONPrimitiveOrNull> extends Sized {
   value: V;
+  type: CellType;
 }
 
 export interface Row<V = JSONPrimitiveOrNull> {
@@ -50,7 +58,7 @@ export function makeTableFromValue<V>(value: V): Table<V> {
       width: 1,
       rows: [
         {
-          cells: [{ height: 1, width: 1, value }],
+          cells: [{ height: 1, width: 1, value, type: CellType.Value }],
           columns: [0],
         },
       ],

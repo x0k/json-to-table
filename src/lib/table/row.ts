@@ -4,7 +4,7 @@ export function rebaseColumns(columns: number[], offset: number) {
   return columns.map((column) => column + offset);
 }
 
-export function prependRow<V>(row: Row<V>, cell: Cell<V>) {
+export function prependCell<V>(row: Row<V>, cell: Cell<V>) {
   return {
     cells: [cell].concat(row.cells),
     columns: [0].concat(rebaseColumns(row.columns, cell.width)),
