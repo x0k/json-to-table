@@ -1,4 +1,5 @@
-import { Block, stretchCellsToBottom, stretchCellsToRight } from "./table";
+import { Block } from "./core";
+import { stretchCellsToBottom, stretchCellsToRight } from "./block";
 
 describe("stretchCellsToBottom", () => {
   it("Should work with shifted bottom cell", () => {
@@ -39,7 +40,7 @@ describe("stretchCellsToBottom", () => {
       ],
     };
     const result = stretchCellsToBottom(data);
-    expect(result).toEqual({
+    const expected: Block = {
       height: 2,
       width: 3,
       rows: [
@@ -74,7 +75,8 @@ describe("stretchCellsToBottom", () => {
           columns: [1],
         },
       ],
-    });
+    };
+    expect(result).toEqual(expected);
   });
 });
 
@@ -118,10 +120,10 @@ describe("stretchCellsToRight", () => {
             },
           ],
           columns: [0],
-        }
+        },
       ],
     };
-    expect(stretchCellsToRight(data)).toEqual({
+    const expected: Block = {
       height: 3,
       width: 2,
       rows: [
@@ -159,8 +161,9 @@ describe("stretchCellsToRight", () => {
             },
           ],
           columns: [0],
-        }
+        },
       ],
-    })
+    };
+    expect(stretchCellsToRight(data)).toEqual(expected);
   });
 });

@@ -7,7 +7,7 @@ import {
 import { Table, Row, Block, makeTable, getWidth, getHeight } from "@/lib/table";
 import { isRecord } from "@/lib/guards";
 import { array } from "@/lib/array";
-import { lcm, max, sum } from '@/lib/math';
+import { lcm, max, sum } from "@/lib/math";
 
 export interface TableFactoryOptions {
   joinPrimitiveArrayValues?: boolean;
@@ -20,7 +20,7 @@ export interface TableFactoryOptions {
 export function makeTableFactory({
   combineArraysOfObjects,
   joinPrimitiveArrayValues,
-  proportionalSizeAdjustmentThreshold = 1
+  proportionalSizeAdjustmentThreshold = 1,
 }: TableFactoryOptions) {
   function stackTablesVertically(tables: Table[]): Table {
     const widths = tables.map(getWidth);
