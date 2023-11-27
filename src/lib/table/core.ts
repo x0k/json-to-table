@@ -47,7 +47,11 @@ export type BlockTransform<V> = (block: Block<V>) => Block<V>;
 
 export type BlockCompositor<V> = (blocks: Block<V>[]) => Block<V>;
 
-export type TableCompositor<V> = (tables: Table<V>[]) => Table<V>;
+export interface ComposedTable<V = JSONPrimitiveOrNull> extends Table<V> {
+  baked: Block<V>[];
+}
+
+export type TableCompositor<V> = (tables: Table<V>[]) => ComposedTable<V>;
 
 export function makeTableFromValue<V>(value: V): Table<V> {
   return {

@@ -1,5 +1,6 @@
 import {
   JSONArray,
+  JSONPrimitiveOrNull,
   JSONRecord,
   JSONValue,
   isJsonPrimitiveOrNull,
@@ -7,23 +8,19 @@ import {
 import {
   Table,
   Row,
-  Block,
   makeTableFromValue,
   getWidth,
   getHeight,
-  makeBlockWidthScaler,
   makeProportionalResizeGuard,
   makeVerticalBlockStacker,
+  makeVerticalTableStacker,
+  ComposedTable,
+  CellType,
+  rebaseColumns,
 } from "@/lib/table";
 import { isRecord } from "@/lib/guards";
 import { array } from "@/lib/array";
 import { lcm, max, sum } from "@/lib/math";
-import {
-  makeTableBaker,
-  makeVerticalTableStacker,
-  tryDeduplicateHead,
-  tryStackComponent,
-} from "./table/table";
 
 export interface TableFactoryOptions<V> {
   joinPrimitiveArrayValues?: boolean;
@@ -39,17 +36,64 @@ export function makeTableFactory({
   joinPrimitiveArrayValues,
   proportionalSizeAdjustmentThreshold = 1,
   cornerCellValue,
-}: TableFactoryOptions<JSONValue>) {
+}: TableFactoryOptions<JSONPrimitiveOrNull>) {
   const isProportionalResize = makeProportionalResizeGuard(
     proportionalSizeAdjustmentThreshold
   );
   const verticalBlockStacker =
-    makeVerticalBlockStacker<JSONValue>(isProportionalResize);
+    makeVerticalBlockStacker<JSONPrimitiveOrNull>(isProportionalResize);
   const verticalTableStacker = makeVerticalTableStacker({
-    verticalBlockStacker: verticalBlockStacker,
+    verticalBlockStacker,
     isProportionalResize,
     cornerCellValue,
   });
+
+  function addIndexes(
+    { baked, body, head, indexes }: ComposedTable,
+    titles: string[]
+  ): Table {
+    const hasIndexes = indexes !== null;
+    const indexesRows = hasIndexes
+      ? indexes.rows.slice()
+      : array(body.height, () => ({
+          cells: [],
+          columns: [],
+        }));
+    let h = 0;
+    for (let i = 0; i < baked.length; i++) {
+      const height = baked[i].height;
+      indexesRows[h] = {
+        cells: [
+          {
+            height,
+            width: 1,
+            value: titles[i],
+            type: CellType.Index,
+          },
+        ],
+        columns: [0, ...rebaseColumns(indexesRows[h].columns, 1)],
+      };
+      if (hasIndexes) {
+        for (let j = 1; j < height; j++) {
+          const hj = h + j;
+          indexesRows[hj] = {
+            cells: indexesRows[hj].cells,
+            columns: rebaseColumns(indexesRows[hj].columns, 1),
+          };
+        }
+      }
+      h += height;
+    }
+    return {
+      head,
+      body,
+      indexes: {
+        rows: indexesRows,
+        width: hasIndexes ? indexes.width + 1 : 1,
+        height: h,
+      },
+    };
+  }
 
   function stackTablesHorizontally(tables: Table[]): Table {
     const width = tables.map(getWidth).reduce(sum);

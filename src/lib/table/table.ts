@@ -1,4 +1,5 @@
 import { lcm, max } from "@/lib/math";
+import { array } from "@/lib/array";
 
 import {
   Block,
@@ -11,7 +12,6 @@ import {
 } from "./core";
 import { mergeRows, prependCell, shiftRows } from "./row";
 import { areProportionalBlocksEqual, makeBlockWidthScaler } from "./block";
-import { array } from "../array";
 
 export interface BakeOptions<V> {
   bakeHead?: boolean;
@@ -166,13 +166,15 @@ export function makeVerticalTableStacker<V>({
       bakeIndexes: stackedIndexes === null,
       cornerCellValue,
     });
-    const stackedBody = verticalBlockStacker(tables.map(bakeTable));
+    const baked = tables.map(bakeTable);
+    const body = verticalBlockStacker(baked);
     return {
-      body: stackedBody,
+      body,
       head:
         deduplicatedHead &&
-        makeBlockWidthScaler<V>(stackedBody.width)(deduplicatedHead),
+        makeBlockWidthScaler<V>(body.width)(deduplicatedHead),
       indexes: stackedIndexes,
+      baked,
     };
   };
 }
