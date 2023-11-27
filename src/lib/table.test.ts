@@ -24,7 +24,7 @@ describe("stretchCellsToBottom", () => {
               value: 3,
             },
           ],
-          indexes: [0, 1, 2],
+          columns: [0, 1, 2],
         },
         {
           cells: [
@@ -34,7 +34,7 @@ describe("stretchCellsToBottom", () => {
               value: 4,
             },
           ],
-          indexes: [1],
+          columns: [1],
         },
       ],
     };
@@ -61,7 +61,7 @@ describe("stretchCellsToBottom", () => {
               value: 3,
             },
           ],
-          indexes: [0, 1, 2],
+          columns: [0, 1, 2],
         },
         {
           cells: [
@@ -71,7 +71,7 @@ describe("stretchCellsToBottom", () => {
               value: 4,
             },
           ],
-          indexes: [1],
+          columns: [1],
         },
       ],
     });
@@ -92,7 +92,7 @@ describe("stretchCellsToRight", () => {
               value: 1,
             },
           ],
-          indexes: [0],
+          columns: [0],
         },
         {
           cells: [
@@ -107,7 +107,7 @@ describe("stretchCellsToRight", () => {
               value: 4,
             },
           ],
-          indexes: [0, 1],
+          columns: [0, 1],
         },
         {
           cells: [
@@ -117,7 +117,7 @@ describe("stretchCellsToRight", () => {
               value: 3,
             },
           ],
-          indexes: [0],
+          columns: [0],
         }
       ],
     };
@@ -133,7 +133,7 @@ describe("stretchCellsToRight", () => {
               value: 1,
             },
           ],
-          indexes: [0],
+          columns: [0],
         },
         {
           cells: [
@@ -148,7 +148,7 @@ describe("stretchCellsToRight", () => {
               value: 4,
             },
           ],
-          indexes: [0, 1],
+          columns: [0, 1],
         },
         {
           cells: [
@@ -158,7 +158,7 @@ describe("stretchCellsToRight", () => {
               value: 3,
             },
           ],
-          indexes: [0],
+          columns: [0],
         }
       ],
     })

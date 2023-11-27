@@ -18,7 +18,7 @@ export interface Cell<V = JSONPrimitiveOrNull> extends Sized {
 export interface Row<V = JSONPrimitiveOrNull> {
   cells: Cell<V>[];
   /** Absolute position in row for each cell */
-  indexes: number[];
+  columns: number[];
 }
 
 export interface Block<V = JSONPrimitiveOrNull> extends Sized {
@@ -39,7 +39,7 @@ export function makeTable<V>(value: V): Table<V> {
       rows: [
         {
           cells: [{ height: 1, width: 1, value }],
-          indexes: [0],
+          columns: [0],
         },
       ],
     },
@@ -145,7 +145,7 @@ function applyResize<V>(
     }
     newRows[rowId] = {
       cells: newRow,
-      indexes: newRows[rowId].indexes,
+      columns: newRows[rowId].columns,
     };
   }
   return newRows;
@@ -162,7 +162,7 @@ export function stretchCellsToBottom<V>({ height, rows, width }: Block<V>) {
     const row = rows[i];
     for (let j = 0; j < row.cells.length; j++) {
       const cell = row.cells[j];
-      const x = row.indexes[j];
+      const x = row.columns[j];
       yShift[x] += cell.height;
       bottomPositions[x] = { cell, rowIndex: i, colIndex: j };
       for (let k = 1; k < cell.width; k++) {
@@ -194,15 +194,15 @@ export function stretchCellsToBottom<V>({ height, rows, width }: Block<V>) {
 
 export function stretchCellsToRight<V>({ height, rows, width }: Block<V>) {
   const rightPositions = new Array<
-    { cell: Cell<V>; index: number; column: number } | undefined
+    { cell: Cell<V>; columnIndex: number; indexInRow: number } | undefined
   >(height);
   for (let i = 0; i < rows.length; i++) {
-    const { cells, indexes } = rows[i];
+    const { cells, columns } = rows[i];
     const index = cells.length - 1;
     rightPositions[i] = {
       cell: cells[index],
-      index: indexes[index],
-      column: index,
+      columnIndex: columns[index],
+      indexInRow: index,
     };
   }
   const toResize = new Map<number, Map<number, number>>();
@@ -211,12 +211,12 @@ export function stretchCellsToRight<V>({ height, rows, width }: Block<V>) {
     if (!position) {
       continue;
     }
-    const diff = width - position.index - position.cell.width;
+    const diff = width - position.columnIndex - position.cell.width;
     if (diff <= 0) {
       continue;
     }
     const cells = toResize.get(i) || new Map<number, number>();
-    toResize.set(i, cells.set(position.column, diff));
+    toResize.set(i, cells.set(position.indexInRow, diff));
   }
   return {
     height,
