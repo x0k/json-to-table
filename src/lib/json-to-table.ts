@@ -4,70 +4,53 @@ import {
   JSONValue,
   isJsonPrimitiveOrNull,
 } from "@/lib/json";
-import { Table, Row, Block, makeTable, getWidth, getHeight } from "@/lib/table";
+import {
+  Table,
+  Row,
+  Block,
+  makeTableFromValue,
+  getWidth,
+  getHeight,
+  makeBlockWidthScaler,
+  makeProportionalResizeGuard,
+  makeVerticalBlockStacker,
+} from "@/lib/table";
 import { isRecord } from "@/lib/guards";
 import { array } from "@/lib/array";
 import { lcm, max, sum } from "@/lib/math";
+import {
+  makeTableBaker,
+  makeVerticalTableStacker,
+  tryDeduplicateHead,
+  tryStackComponent,
+} from "./table/table";
 
-export interface TableFactoryOptions {
+export interface TableFactoryOptions<V> {
   joinPrimitiveArrayValues?: boolean;
   /** combine arrays of objects into a single object */
   combineArraysOfObjects?: boolean;
   /** proportional size adjustment threshold */
   proportionalSizeAdjustmentThreshold?: number;
+  cornerCellValue: V;
 }
 
 export function makeTableFactory({
   combineArraysOfObjects,
   joinPrimitiveArrayValues,
   proportionalSizeAdjustmentThreshold = 1,
-}: TableFactoryOptions) {
-  function stackTablesVertically(tables: Table[]): Table {
-    const widths = tables.map(getWidth);
-    const lcmWidth = widths.reduce(lcm);
-    const maxWidth = widths.reduce(max);
-    const isProportionalResize =
-      (lcmWidth - maxWidth) / maxWidth <= proportionalSizeAdjustmentThreshold;
-    const width = isProportionalResize ? lcmWidth : maxWidth;
-    const height = finalTables.map(getHeight).reduce(sum);
-    const rows: Row[] = [];
-    for (let i = 0; i < finalTables.length; i++) {
-      const {
-        rows: tableRows,
-        width: tableWidth,
-        height: tableHeight,
-      } = finalTables[i];
-      const multiplier = Math.floor(width / tableWidth);
-      const plugWidth =
-        !isProportionalResize && width - tableWidth * multiplier;
-      for (let j = 0; j < tableRows.length; j++) {
-        const newRow: Row = [];
-        const tableRow = tableRows[j];
-        for (let k = 0; k < tableRow.length; k++) {
-          const cell = tableRow[k];
-          newRow.push({
-            ...cell,
-            width: cell.width * multiplier,
-          });
-        }
-        if (plugWidth && j === 0) {
-          newRow.push({
-            value: "",
-            height: tableHeight,
-            width: plugWidth,
-            type: CellType.Plug,
-          });
-        }
-        rows.push(newRow);
-      }
-    }
-    return {
-      width,
-      height,
-      rows,
-      tables: finalTables,
-    };
-  }
+  cornerCellValue,
+}: TableFactoryOptions<JSONValue>) {
+  const isProportionalResize = makeProportionalResizeGuard(
+    proportionalSizeAdjustmentThreshold
+  );
+  const verticalBlockStacker =
+    makeVerticalBlockStacker<JSONValue>(isProportionalResize);
+  const verticalTableStacker = makeVerticalTableStacker({
+    verticalBlockStacker: verticalBlockStacker,
+    isProportionalResize,
+    cornerCellValue,
+  });
+
   function stackTablesHorizontally(tables: Table[]): Table {
     const width = tables.map(getWidth).reduce(sum);
     const heights = tables.map(getHeight);
@@ -122,23 +105,25 @@ export function makeTableFactory({
   function transformArray(value: JSONArray): Table {
     const titles = array(value.length, (i) => String(i + 1));
     const tables = value.map(transformValue);
-    return mergeTables(arrayViewType, titles, tables);
+    const stacked = verticalTableStacker(tables);
+    return addIndexes(stacked, titles);
   }
   function transformRecord(value: JSONRecord): Table {
     const titles = Object.keys(value);
     const tables = titles.map((key) => transformValue(value[key]));
-    return mergeTables(recordViewType, titles, tables);
+    const stacked = stackTablesHorizontally(tables);
+    return addHeaders(stacked, titles);
   }
   function transformValue(value: JSONValue): Table {
     if (isJsonPrimitiveOrNull(value)) {
-      return makeTable(value);
+      return makeTableFromValue(value);
     }
     if (Object.keys(value).length === 0) {
-      return makeTable("");
+      return makeTableFromValue("");
     }
     const isArray = Array.isArray(value);
     if (isArray && joinPrimitiveArrayValues) {
-      return makeTable(value.join(", "));
+      return makeTableFromValue(value.join(", "));
     }
     if (isArray && combineArraysOfObjects && value.every(isRecord)) {
       // Can be an empty object

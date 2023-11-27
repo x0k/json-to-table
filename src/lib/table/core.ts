@@ -25,13 +25,26 @@ export interface Block<V = JSONPrimitiveOrNull> extends Sized {
 }
 
 export interface Table<V = JSONPrimitiveOrNull> {
-  head?: Block<V>;
+  head: Block<V> | null;
+  indexes: Block<V> | null;
   body: Block<V>;
-  indexes?: Block<V>;
 }
 
-export function makeTable<V>(value: V): Table<V> {
+export type ProportionalResizeGuard = (
+  lcmValue: number,
+  maxValue: number
+) => boolean;
+
+export type BlockTransform<V> = (block: Block<V>) => Block<V>;
+
+export type BlockCompositor<V> = (blocks: Block<V>[]) => Block<V>;
+
+export type TableCompositor<V> = (tables: Table<V>[]) => Table<V>;
+
+export function makeTableFromValue<V>(value: V): Table<V> {
   return {
+    head: null,
+    indexes: null,
     body: {
       height: 1,
       width: 1,
@@ -45,10 +58,9 @@ export function makeTable<V>(value: V): Table<V> {
   };
 }
 
-export function getHeight<V>(table: Table<V>) {
-  return table.body.height + (table.head?.height || 0);
-}
-
-export function getWidth<V>(table: Table<V>) {
-  return table.body.width + (table.indexes?.width || 0);
+export function makeProportionalResizeGuard(
+  threshold: number
+): ProportionalResizeGuard {
+  return (lcmValue: number, maxValue: number) =>
+    (lcmValue - maxValue) / maxValue <= threshold;
 }

@@ -1,6 +1,22 @@
+import { lcm, max, sum } from "@/lib/math";
 import { array } from "@/lib/array";
 
-import { Block, Cell, Row } from "./core";
+import {
+  Block,
+  BlockCompositor,
+  BlockTransform,
+  Cell,
+  ProportionalResizeGuard,
+  Row,
+} from "./core";
+
+export function getWidth<V>(block: Block<V>) {
+  return block.width;
+}
+
+export function getHeight<V>(block: Block<V>) {
+  return block.height;
+}
 
 export function areProportionalBlocksEqual<V>(
   blocks: Block<V>[],
@@ -123,5 +139,45 @@ export function stretchCellsToRight<V>({ height, rows, width }: Block<V>) {
     height,
     width,
     rows: applyResize(rows, toResize, "width"),
+  };
+}
+
+export function makeBlockWidthScaler<V>(finalWidth: number): BlockTransform<V> {
+  return ({ height, width, rows }) => {
+    const multiplier = Math.floor(finalWidth / width);
+    const block: Block<V> = {
+      width: finalWidth,
+      height,
+      rows: rows.map((row) => ({
+        cells: row.cells.map((cell) => ({
+          ...cell,
+          width: cell.width * multiplier,
+        })),
+        columns: row.columns.map((column) => column * multiplier),
+      })),
+    };
+    return finalWidth - width * multiplier === 0
+      ? block
+      : stretchCellsToRight(block);
+  };
+}
+
+export function makeVerticalBlockStacker<V>(
+  isProportionalResize: ProportionalResizeGuard
+): BlockCompositor<V> {
+  return function stackBlocksVertically(blocks) {
+    const widths = blocks.map(getWidth);
+    const lcmWidth = widths.reduce(lcm);
+    const maxWidth = widths.reduce(max);
+    const width = isProportionalResize(lcmWidth, maxWidth)
+      ? lcmWidth
+      : maxWidth;
+    const finalBlocks =
+      lcmWidth === maxWidth ? blocks : blocks.map(makeBlockWidthScaler(width));
+    return {
+      width,
+      height: finalBlocks.map(getHeight).reduce(sum),
+      rows: finalBlocks.flatMap((block) => block.rows),
+    };
   };
 }
