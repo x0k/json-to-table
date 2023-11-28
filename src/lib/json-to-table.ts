@@ -14,7 +14,7 @@ import {
   CellType,
   rebaseColumns,
   makeTableStacker,
-} from "@/lib/table";
+} from "@/lib/json-table";
 import { isRecord } from "@/lib/guards";
 import { array } from "@/lib/array";
 

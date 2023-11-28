@@ -1,6 +1,7 @@
+import { blockToASCIITable } from "../block-to-ascii-table";
+
 import { getSimpleMySqlASCIITableSeparatorType } from "./core";
 import { fromASCIITable } from "./from-ascii-table";
-import { toASCIITable } from "./to-ascii-table";
 
 describe("fromASCIITable", () => {
   it("Should work with simple table", () => {
@@ -11,7 +12,7 @@ describe("fromASCIITable", () => {
 +---+
 `,
       getSimpleMySqlASCIITableSeparatorType
-    ).rows[0][0];
+    ).rows[0].cells[0];
     expect(value).toBe("a");
   });
 
@@ -28,7 +29,7 @@ describe("fromASCIITable", () => {
       `,
       getSimpleMySqlASCIITableSeparatorType
     );
-    const ascii = toASCIITable(table);
+    const ascii = blockToASCIITable(table);
     expect(`\n${ascii}`).toBe(`
 +--------------------------------------------+------------------------+
 |                    Col1                    |          Col3          |

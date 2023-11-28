@@ -1,6 +1,7 @@
 import { array } from "@/lib/array";
-import { fromMatrix, CellType } from "@/lib/json-table";
+import { CellType } from "@/lib/json-table";
 import { matrix } from "@/lib/matrix";
+import { fromMatrix } from '@/lib/block-matrix';
 
 import {
   getContentOfRawCell,

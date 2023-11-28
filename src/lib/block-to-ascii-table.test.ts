@@ -1,5 +1,5 @@
 import { blockToASCIITable } from "./block-to-ascii-table";
-import { Block, CellType } from "./table";
+import { Block, CellType } from "./json-table";
 
 describe("blockToASCIITable", () => {
   it("Should work with simple table", () => {

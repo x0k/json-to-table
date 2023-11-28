@@ -1,7 +1,7 @@
 import { array } from "@/lib/array";
 import { Matrix, matrix } from "@/lib/matrix";
 
-import { Block, Row, CellType, Cell } from "@/lib/table";
+import { Block, Row, CellType, Cell } from "@/lib/json-table";
 
 const UNDEFINED_CELL = Symbol("undefined cell");
 

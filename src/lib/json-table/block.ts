@@ -4,13 +4,12 @@ import { array } from "@/lib/array";
 import {
   Block,
   BlockCompositor,
-  BlockSizeAspect,
   BlockTransform,
   Cell,
   ProportionalResizeGuard,
   Row,
 } from "./core";
-import { mergeRows, rebaseColumns } from "./row";
+import { mergeRows } from "./row";
 
 export function getWidth<V>(block: Block<V>) {
   return block.width;
@@ -197,11 +196,9 @@ export function makeBlockHeightScaler<V>(
       height: finalHeight,
       rows,
     };
-    const shouldBeStretched = finalHeight - height * multiplier === 0
+    const shouldBeStretched = finalHeight - height * multiplier === 0;
     if (multiplier === 1) {
-      return shouldBeStretched
-        ? block
-        : stretchCellsToBottom(block);
+      return shouldBeStretched ? block : stretchCellsToBottom(block);
     }
     const newRows = array(
       finalHeight,
@@ -223,9 +220,7 @@ export function makeBlockHeightScaler<V>(
       }
     }
     block.rows = newRows;
-    return shouldBeStretched
-      ? block
-      : stretchCellsToBottom(block);
+    return shouldBeStretched ? block : stretchCellsToBottom(block);
   };
 }
 
@@ -248,7 +243,7 @@ export function makeHorizontalBlockStacker<V>(
       for (let j = 0; j < block.rows.length; j++) {
         rows[j] = mergeRows(rows[j], w, block.rows[j]);
       }
-      w += block.width
+      w += block.width;
     }
     return {
       width,

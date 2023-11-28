@@ -1,7 +1,7 @@
 import { blockToASCIITable } from "./block-to-ascii-table";
 import { JSONPrimitiveOrNull } from "./json";
 import { makeTableFactory } from "./json-to-table";
-import { makeTableBaker } from "./table";
+import { makeTableBaker } from "./json-table";
 
 import simpleHeadersDuplication from "./__fixtures__/simple-headers-duplication.json";
 import simpleIndexesDeduplication from "./__fixtures__/simple-indexes-deduplication.json";
