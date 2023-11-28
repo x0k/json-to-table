@@ -1,0 +1,29 @@
+{
+  "string": "Hello, JSON!",
+  "number": 42,
+  "boolean": true,
+  "nullValue": null,
+  "array": [1, 2, 3, "four", false],
+  "object": {
+    "key1": "value1",
+    "key2": 789,
+    "key3": {
+      "nestedKey": "nestedValue"
+    }
+  },
+  "nestedArray": [
+    {
+      "name": "John",
+      "age": 30,
+      "isStudent": false
+    },
+    {
+      "name": "Alice",
+      "age": 25,
+      "isStudent": true
+    }
+  ],
+  "escapedString": "This is a \"quoted\" string.",
+  "unicodeString": "Unicode characters: \u00A9\uD83D\uDE00",
+  "date": "2023-11-28T12:34:56.789Z"
+}

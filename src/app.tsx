@@ -51,10 +51,16 @@ function makeTableData(data: string): JSONValue {
       };
 }
 
+function sample(name: string, setData: (data: string) => void) {
+  return fetch(`${name}.json`)
+    .then((r) => r.text())
+    .then(setData);
+}
+
 export function App() {
   const [data, setData] = useState("");
   const [transformData, setTransformData] = useState<TransformConfig>({
-    preset: TransformPreset.Optimal,
+    preset: TransformPreset.Default,
     transform: false,
     format: OutputFormat.HTML,
     paginate: false,
@@ -62,8 +68,22 @@ export function App() {
   const handleDataChange = useChangeHandler(setData);
   return (
     <Stack p={8} maxW="6xl" mx="auto" gap={4}>
-      <Heading>JSON to Table</Heading>
-      <Textarea autoFocus value={data} onChange={handleDataChange} rows={10} />
+      <Heading variant={"h1"} >JSON to Table</Heading>
+      <Stack direction="row" gap={2} alignItems="center">
+        <Button onClick={() => sample("test", setData)}>Test</Button>
+        <Button onClick={() => sample("deduplication", setData)}>
+          Deduplication
+        </Button>
+        <Button onClick={() => sample("company", setData)}>Company</Button>
+        <Button onClick={() => sample("large", setData)}>Large</Button>
+      </Stack>
+      <Textarea
+        placeholder="Paste JSON here"
+        autoFocus
+        value={data}
+        onChange={handleDataChange}
+        rows={10}
+      />
       <Form
         validator={validator}
         schema={TRANSFORM_SCHEMA}
