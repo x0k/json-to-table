@@ -5,6 +5,7 @@ import { makeTableBaker } from "./json-table";
 
 import simpleHeadersDuplication from "./__fixtures__/simple-headers-duplication.json";
 import simpleIndexesDeduplication from "./__fixtures__/simple-indexes-deduplication.json";
+import parsingError from "./__fixtures__/parsing-error.json";
 
 describe("makeTableFactory", () => {
   const cornerCellValue = "№";
@@ -116,6 +117,24 @@ describe("makeTableFactory", () => {
 +---+---+---+---+
 | 3 | 7 | 8 | 9 |
 +---+---+---+---+
+`);
+  });
+
+  it("Should combine simple values should not affect objects values", () => {
+    const factory = makeTableFactory({
+      cornerCellValue,
+      joinPrimitiveArrayValues: true,
+    });
+    const table = factory(parsingError);
+    const ascii = blockToASCII(bake(table));
+    expect(`\n${ascii}\n`).toBe(`
++---+-----------------------------------+
+|   |              weather              |
+| № +------+-------+-------------+------+
+|   |  id  | main  | description | icon |
++---+------+-------+-------------+------+
+| 1 |  800 | Clear | clear sky   | 01n  |
++---+------+-------+-------------+------+
 `);
   });
 });

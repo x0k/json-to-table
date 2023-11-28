@@ -169,7 +169,7 @@ export function makeTableFactory({
       return makeTableFromValue("");
     }
     const isArray = Array.isArray(value);
-    if (isArray && joinPrimitiveArrayValues) {
+    if (isArray && joinPrimitiveArrayValues && value.every(isJsonPrimitiveOrNull)) {
       return makeTableFromValue(value.join(", "));
     }
     if (isArray && combineArraysOfObjects && value.every(isRecord)) {
