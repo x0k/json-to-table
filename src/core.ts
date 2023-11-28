@@ -3,6 +3,9 @@ import { UiSchema } from "@rjsf/utils";
 import { JSONSchema } from "@/lib/json-schema";
 import { TableFactoryOptions } from "@/lib/json-to-table";
 import { JSONPrimitiveOrNull } from "@/lib/json";
+import { Block } from "./lib/json-table";
+import { createMatrix, fromMatrix } from "./lib/block-matrix";
+import { horizontalMirror, transpose, verticalMirror } from "./lib/matrix";
 
 export enum TransformPreset {
   Optimal = "Optimal",
@@ -205,4 +208,27 @@ export function extractTableFactoryOptions(
       throw new Error(`Unexpected preset "${JSON.stringify(n)}"`);
     }
   }
+}
+
+export function makeTransformApplicator(config: TransformConfig) {
+  return (block: Block) => {
+    if (!config.transform) {
+      return block;
+    }
+    let matrix = createMatrix(block, ({ type, value }) => ({ type, value }));
+    if (config.horizontalReflect) {
+      matrix = horizontalMirror(matrix);
+    }
+    if (config.verticalReflect) {
+      matrix = verticalMirror(matrix);
+    }
+    if (config.transpose) {
+      matrix = transpose(matrix);
+    }
+    return fromMatrix(
+      matrix,
+      ({ type }) => type,
+      ({ value }) => value
+    );
+  };
 }

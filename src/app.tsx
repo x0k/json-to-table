@@ -31,7 +31,8 @@ import {
   OutputFormat,
   TransformPreset,
   TRANSFORM_SCHEMA,
-} from "./model";
+  makeTransformApplicator,
+} from "./core";
 
 function useChangeHandler(handler: (value: string) => void) {
   return useCallback(
@@ -73,6 +74,7 @@ export function App() {
         onSubmit={({ formData }) => {
           const options = extractTableFactoryOptions(formData);
           const tableTransformer = makeTableFactory(options);
+          const transformApplicator = makeTransformApplicator(formData);
           const bake = makeTableBaker<JSONPrimitiveOrNull>({
             cornerCellValue: options.cornerCellValue,
             bakeHead: true,
@@ -91,7 +93,8 @@ export function App() {
                 );
           const pagesTables = pagesData
             .map(transformValue(tableTransformer))
-            .map(transformValue(bake));
+            .map(transformValue(bake))
+            .map(transformValue(transformApplicator));
           switch (formData.format as OutputFormat) {
             case OutputFormat.HTML: {
               return createPage(
@@ -138,7 +141,7 @@ export function App() {
                 .then(createFileURL)
                 .then(makeDownloadFileByUrl("table.xlsx"));
             default:
-              throw new Error(`Unexpected transform format`);
+              throw new Error(`Unexpected output format`);
           }
         }}
       >
