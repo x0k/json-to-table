@@ -13,6 +13,7 @@ function getMaxLineLength(rows: string[]) {
 
 function padCellRow(row: string, w: number, cell: Cell, rows: string[]) {
   switch (cell.type) {
+    case CellType.Corner:
     case CellType.Header:
     case CellType.Index: {
       const p = Math.floor((w - row.length) / 2);

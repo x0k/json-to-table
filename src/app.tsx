@@ -11,7 +11,8 @@ import {
 } from "@/lib/json";
 import { JSONParseStatus, jsonTryParse } from "@/lib/json-parser";
 import { Entry, transformValue } from "@/lib/entry";
-import { createPage, renderPage } from "@/lib/browser";
+import { createPage } from "@/lib/browser";
+import { escapeHtml, renderHTMLPage } from "@/lib/html";
 import { makeHTMLPageContent, HTML_TABLE_STYLES } from "@/lib/block-to-html";
 import { makeWorkBook } from "@/lib/block-to-xlsx";
 import { max, sum } from "@/lib/math";
@@ -94,7 +95,7 @@ export function App() {
           switch (formData.format as OutputFormat) {
             case OutputFormat.HTML: {
               return createPage(
-                renderPage(
+                renderHTMLPage(
                   "Table",
                   makeHTMLPageContent(pagesTables),
                   HTML_TABLE_STYLES
@@ -103,9 +104,9 @@ export function App() {
             }
             case OutputFormat.ASCII: {
               const renderTable = (t: Block) =>
-                `<pre><code>${blockToASCII(t)}</code></pre>`;
+                `<pre><code>${escapeHtml(blockToASCII(t))}</code></pre>`;
               return createPage(
-                renderPage(
+                renderHTMLPage(
                   "Table",
                   pagesTables.length > 1
                     ? pagesTables
