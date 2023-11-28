@@ -10,7 +10,7 @@ import {
   Table,
   TableCompositor,
 } from "./core";
-import { mergeRows, prependCell, shiftRows } from "./row";
+import { mergeRows, prependCell, rebaseColumns, shiftRows } from "./row";
 import { areProportionalBlocksEqual, makeBlockWidthScaler } from "./block";
 
 export interface BakeOptions<V> {
@@ -19,33 +19,47 @@ export interface BakeOptions<V> {
   cornerCellValue: V;
 }
 
-export function tryDeduplicateHead<V>(
+type TableComponent = "head" | "indexes";
+type BlockSizeAspect = "height" | "width";
+
+const TABLE_COMPONENT_MIN_ASPECTS: Record<TableComponent, BlockSizeAspect> = {
+  head: "height",
+  indexes: "width",
+};
+
+export function tryDeduplicateComponent<V>(
   tables: Table<V>[],
+  component: "head" | "indexes",
   isProportionalSizeAdjustment: ProportionalResizeGuard
 ): Block<V> | null {
-  const heads: Block<V>[] = [];
-  let lcmHeight = heads[0].height;
-  let maxHeight = heads[0].height;
-  let minHeightHeadIndex = 0;
-  for (let i = 0; i < tables.length; i++) {
-    const head = tables[i].head;
-    if (!head) {
+  const { [component]: cmp } = tables[0];
+  if (!cmp) {
+    return null;
+  }
+  const blocks = [cmp];
+  let lcmHeight = cmp.height;
+  let maxHeight = cmp.height;
+  let minIndex = 0;
+  const minAspect = TABLE_COMPONENT_MIN_ASPECTS[component];
+  for (let i = 1; i < tables.length; i++) {
+    const cmp = tables[i][component];
+    if (!cmp) {
       return null;
     }
-    lcmHeight = lcm(lcmHeight, head.height);
-    maxHeight = max(maxHeight, head.height);
-    heads.push(head);
-    if (head.height < heads[minHeightHeadIndex].height) {
-      minHeightHeadIndex = i;
+    lcmHeight = lcm(lcmHeight, cmp.height);
+    maxHeight = max(maxHeight, cmp.height);
+    blocks.push(cmp);
+    if (cmp[minAspect] < blocks[minIndex][minAspect]) {
+      minIndex = i;
     }
   }
   if (
     !isProportionalSizeAdjustment(lcmHeight, maxHeight) ||
-    !areProportionalBlocksEqual(heads, lcmHeight)
+    !areProportionalBlocksEqual(blocks, lcmHeight)
   ) {
     return null;
   }
-  return heads[minHeightHeadIndex];
+  return blocks[minIndex];
 }
 
 export function makeTableBaker<V>({
@@ -97,48 +111,86 @@ export function makeTableBaker<V>({
   };
 }
 
-export function tryStackIndexes<V>(
+const TABLE_COMPONENT_OPPOSITES: Record<TableComponent, TableComponent> = {
+  head: "indexes",
+  indexes: "head",
+};
+
+export function tryStackTableComponent<V>(
   tables: Table<V>[],
-  compose: BlockCompositor<V>,
-  bakeHead: boolean,
-  cornerCellValue: V
+  component: TableComponent,
+  bake: boolean,
+  cornerCellValue: V,
+  compose: BlockCompositor<V>
 ) {
-  const indexes: Block<V>[] = [];
+  const blocks: Block<V>[] = [];
   for (let i = 0; i < tables.length; i++) {
     const table = tables[i];
-    const cmp = table.indexes;
+    const {
+      [component]: cmp,
+      [TABLE_COMPONENT_OPPOSITES[component]]: opposite,
+    } = table;
     if (cmp === null) {
       return null;
     }
-    const head = table.head;
-    indexes.push(
-      bakeHead && head !== null
-        ? {
-            height: cmp.height + head.height,
-            width: cmp.width,
-            rows: [
-              {
-                cells: [
-                  {
-                    height: head.height,
-                    width: cmp.width,
-                    value: cornerCellValue,
-                    type: CellType.Corner,
-                  },
-                ],
-                columns: [0],
-              },
-              ...array(head.height - 1, () => ({
-                cells: [],
-                columns: [],
-              })),
-              ...cmp.rows,
-            ],
-          }
-        : cmp
-    );
+    if (!bake || !opposite) {
+      blocks.push(cmp);
+      continue;
+    }
+    switch (component) {
+      case "indexes":
+        blocks.push({
+          height: cmp.height + opposite.height,
+          width: cmp.width,
+          rows: [
+            {
+              cells: [
+                {
+                  height: opposite.height,
+                  width: cmp.width,
+                  value: cornerCellValue,
+                  type: CellType.Corner,
+                },
+              ],
+              columns: [0],
+            },
+            ...array(opposite.height - 1, () => ({
+              cells: [],
+              columns: [],
+            })),
+            ...cmp.rows,
+          ],
+        });
+        break;
+      case "head":
+        blocks.push({
+          height: cmp.height,
+          width: cmp.width + opposite.width,
+          rows: [
+            {
+              cells: [
+                {
+                  height: cmp.height,
+                  width: opposite.width,
+                  value: cornerCellValue,
+                  type: CellType.Corner,
+                },
+                ...cmp.rows[0].cells,
+              ],
+              columns: [
+                0,
+                ...rebaseColumns(cmp.rows[0].columns, opposite.width),
+              ],
+            },
+            ...cmp.rows.slice(1),
+          ],
+        });
+        break;
+      default:
+        throw new Error();
+    }
   }
-  return compose(indexes);
+  return compose(blocks);
 }
 
 export interface VerticalTableStackerOptions<V> {
@@ -153,13 +205,18 @@ export function makeVerticalTableStacker<V>({
   isProportionalResize,
 }: VerticalTableStackerOptions<V>): TableCompositor<V> {
   return function stackTablesVertically(tables) {
-    const deduplicatedHead = tryDeduplicateHead(tables, isProportionalResize);
-    const bakeHead = deduplicatedHead === null;
-    const stackedIndexes = tryStackIndexes(
+    const deduplicatedHead = tryDeduplicateComponent(
       tables,
-      verticalBlockStacker,
+      "head",
+      isProportionalResize
+    );
+    const bakeHead = deduplicatedHead === null;
+    const stackedIndexes = tryStackTableComponent(
+      tables,
+      "indexes",
       bakeHead,
-      cornerCellValue
+      cornerCellValue,
+      verticalBlockStacker
     );
     const bakeTable = makeTableBaker({
       bakeHead,
@@ -176,5 +233,48 @@ export function makeVerticalTableStacker<V>({
       indexes: stackedIndexes,
       baked,
     };
+  };
+}
+
+export interface HorizontalTableStackerOptions<V> {
+  isProportionalResize: ProportionalResizeGuard;
+  horizontalBlockStacker: BlockCompositor<V>;
+  cornerCellValue: V;
+}
+
+export function makeHorizontalTableStacker<V>({
+  cornerCellValue,
+  horizontalBlockStacker,
+  isProportionalResize,
+}: HorizontalTableStackerOptions<V>): TableCompositor<V> {
+  return (tables) => {
+    const deduplicatedIndexes = tryDeduplicateComponent(
+      tables,
+      "indexes",
+      isProportionalResize
+    );
+    const bakeIndexes = deduplicatedIndexes === null;
+    const stackedHeads = tryStackTableComponent(
+      tables,
+      "head",
+      bakeIndexes,
+      cornerCellValue,
+      horizontalBlockStacker
+    )
+    const bakeTable = makeTableBaker({
+      bakeIndexes,
+      bakeHead: stackedHeads === null,
+      cornerCellValue,
+    })
+    const baked = tables.map(bakeTable);
+    const body = horizontalBlockStacker(baked);
+    return {
+      body,
+      indexes:
+        deduplicatedIndexes &&
+        makeBlockHeightScaler<V>(body.height)(deduplicatedIndexes),
+      head: stackedHeads,
+      baked,
+    }
   };
 }
