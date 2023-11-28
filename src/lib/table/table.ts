@@ -7,25 +7,29 @@ import {
   CellType,
   ProportionalResizeGuard,
   Row,
+  TABLE_COMPONENT_SIZE_ASPECTS,
+  TABLE_COMPONENT_OPPOSITES,
   Table,
+  TableComponent,
   TableCompositor,
+  BlockTransform,
+  BlockSizeAspect,
+  ComposedTable,
 } from "./core";
 import { mergeRows, prependCell, rebaseColumns, shiftRows } from "./row";
-import { areProportionalBlocksEqual, makeBlockWidthScaler } from "./block";
+import {
+  areProportionalBlocksEqual,
+  makeBlockHeightScaler,
+  makeBlockWidthScaler,
+  makeHorizontalBlockStacker,
+  makeVerticalBlockStacker,
+} from "./block";
 
 export interface BakeOptions<V> {
   bakeHead?: boolean;
   bakeIndexes?: boolean;
   cornerCellValue: V;
 }
-
-type TableComponent = "head" | "indexes";
-type BlockSizeAspect = "height" | "width";
-
-const TABLE_COMPONENT_MIN_ASPECTS: Record<TableComponent, BlockSizeAspect> = {
-  head: "height",
-  indexes: "width",
-};
 
 export function tryDeduplicateComponent<V>(
   tables: Table<V>[],
@@ -40,7 +44,7 @@ export function tryDeduplicateComponent<V>(
   let lcmHeight = cmp.height;
   let maxHeight = cmp.height;
   let minIndex = 0;
-  const minAspect = TABLE_COMPONENT_MIN_ASPECTS[component];
+  const minAspect = TABLE_COMPONENT_SIZE_ASPECTS[component];
   for (let i = 1; i < tables.length; i++) {
     const cmp = tables[i][component];
     if (!cmp) {
@@ -110,11 +114,6 @@ export function makeTableBaker<V>({
     };
   };
 }
-
-const TABLE_COMPONENT_OPPOSITES: Record<TableComponent, TableComponent> = {
-  head: "indexes",
-  indexes: "head",
-};
 
 export function tryStackTableComponent<V>(
   tables: Table<V>[],
@@ -260,12 +259,12 @@ export function makeHorizontalTableStacker<V>({
       bakeIndexes,
       cornerCellValue,
       horizontalBlockStacker
-    )
+    );
     const bakeTable = makeTableBaker({
       bakeIndexes,
       bakeHead: stackedHeads === null,
       cornerCellValue,
-    })
+    });
     const baked = tables.map(bakeTable);
     const body = horizontalBlockStacker(baked);
     return {
@@ -275,6 +274,83 @@ export function makeHorizontalTableStacker<V>({
         makeBlockHeightScaler<V>(body.height)(deduplicatedIndexes),
       head: stackedHeads,
       baked,
-    }
+    };
+  };
+}
+
+export interface TableStackerOptions<C extends TableComponent, V> {
+  isProportionalResize: ProportionalResizeGuard;
+  cornerCellValue: V;
+  deduplicationComponent: C;
+}
+
+const TABLE_COMPONENT_TO_BAKE_OPTIONS: Record<
+  TableComponent,
+  "bakeHead" | "bakeIndexes"
+> = {
+  head: "bakeHead",
+  indexes: "bakeIndexes",
+};
+
+const SIZE_ASPECT_SCALE_FACTORIES: Record<
+  BlockSizeAspect,
+  <V>(value: number) => BlockTransform<V>
+> = {
+  width: makeBlockWidthScaler,
+  height: makeBlockHeightScaler,
+};
+
+const TABLE_COMPONENT_TO_BLOCK_STACKERS: Record<
+  TableComponent,
+  <V>(guard: ProportionalResizeGuard) => BlockCompositor<V>
+> = {
+  head: makeVerticalBlockStacker,
+  indexes: makeHorizontalBlockStacker,
+};
+
+export function makeTableStacker<C extends TableComponent, V>({
+  deduplicationComponent,
+  isProportionalResize,
+  cornerCellValue,
+}: TableStackerOptions<C, V>): TableCompositor<V> {
+  const blockStacker =
+    TABLE_COMPONENT_TO_BLOCK_STACKERS[deduplicationComponent]<V>(
+      isProportionalResize
+    );
+  return (tables) => {
+    const opposite = TABLE_COMPONENT_OPPOSITES[deduplicationComponent];
+    const deduplicated = tryDeduplicateComponent(
+      tables,
+      deduplicationComponent,
+      isProportionalResize
+    );
+    const bake = deduplicated === null;
+    const stacked = tryStackTableComponent(
+      tables,
+      opposite,
+      bake,
+      cornerCellValue,
+      blockStacker
+    );
+    const baked = tables.map(
+      makeTableBaker({
+        [TABLE_COMPONENT_TO_BAKE_OPTIONS[deduplicationComponent]]: bake,
+        [TABLE_COMPONENT_TO_BAKE_OPTIONS[opposite]]: stacked === null,
+        cornerCellValue,
+      })
+    );
+    const body = blockStacker(baked);
+    const aspect = TABLE_COMPONENT_SIZE_ASPECTS[opposite];
+    const scaled =
+      deduplicated &&
+      SIZE_ASPECT_SCALE_FACTORIES[aspect]<V>(body[aspect])(body);
+    // @ts-expect-error too dynamic
+    const composedTable: ComposedTable<V> = {
+      body,
+      baked,
+      [deduplicationComponent]: scaled,
+      [opposite]: stacked,
+    };
+    return composedTable;
   };
 }

@@ -53,6 +53,23 @@ export interface ComposedTable<V = JSONPrimitiveOrNull> extends Table<V> {
 
 export type TableCompositor<V> = (tables: Table<V>[]) => ComposedTable<V>;
 
+export type TableComponent = "head" | "indexes";
+export type BlockSizeAspect = "height" | "width";
+
+export const TABLE_COMPONENT_SIZE_ASPECTS: Record<
+  TableComponent,
+  BlockSizeAspect
+> = {
+  head: "height",
+  indexes: "width",
+};
+
+export const TABLE_COMPONENT_OPPOSITES: Record<TableComponent, TableComponent> =
+  {
+    head: "indexes",
+    indexes: "head",
+  };
+
 export function makeTableFromValue<V>(value: V): Table<V> {
   return {
     head: null,

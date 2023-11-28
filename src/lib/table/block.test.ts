@@ -1,5 +1,9 @@
 import { Block, CellType } from "./core";
-import { stretchCellsToBottom, stretchCellsToRight } from "./block";
+import {
+  stretchCellsToBottom,
+  stretchCellsToRight,
+  makeBlockHeightScaler,
+} from "./block";
 
 describe("stretchCellsToBottom", () => {
   it("Should work with shifted bottom cell", () => {
@@ -181,5 +185,104 @@ describe("stretchCellsToRight", () => {
       ],
     };
     expect(stretchCellsToRight(data)).toEqual(expected);
+  });
+});
+
+describe("makeBlockHeightScaler", () => {
+  it("Should scale correctly and fill empty cells", () => {
+    const scale = makeBlockHeightScaler(5)
+    const data: Block = {
+      height: 2,
+      width: 2,
+      rows: [
+        {
+          cells: [
+            {
+              height: 1,
+              width: 1,
+              value: 1,
+              type: CellType.Value,
+            },
+            {
+              height: 1,
+              width: 1,
+              value: 2,
+              type: CellType.Value,
+            },
+          ],
+          columns: [0, 1],
+        },
+        {
+          cells: [
+            {
+              height: 1,
+              width: 1,
+              value: 3,
+              type: CellType.Value,
+            },
+            {
+              height: 1,
+              width: 1,
+              value: 4,
+              type: CellType.Value,
+            },
+          ],
+          columns: [0, 1],
+        },
+      ],
+    };
+    const expected: Block = {
+      height: 5,
+      width: 2,
+      rows: [
+        {
+          cells: [
+            {
+              height: 2,
+              width: 1,
+              value: 1,
+              type: CellType.Value,
+            },
+            {
+              height: 2,
+              width: 1,
+              value: 2,
+              type: CellType.Value,
+            },
+          ],
+          columns: [0, 1],
+        },
+        {
+          cells: [],
+          columns: [],
+        },
+        {
+          cells: [
+            {
+              height: 3,
+              width: 1,
+              value: 3,
+              type: CellType.Value,
+            },
+            {
+              height: 3,
+              width: 1,
+              value: 4,
+              type: CellType.Value,
+            },
+          ],
+          columns: [0, 1],
+        },
+        {
+          cells: [],
+          columns: [],
+        },
+        {
+          cells: [],
+          columns: [],
+        }
+      ]
+    }
+    expect(scale(data)).toEqual(expected);
   });
 });

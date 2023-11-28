@@ -9,18 +9,14 @@ import {
   Table,
   Row,
   makeTableFromValue,
-  getWidth,
-  getHeight,
   makeProportionalResizeGuard,
-  makeVerticalBlockStacker,
-  makeVerticalTableStacker,
   ComposedTable,
   CellType,
   rebaseColumns,
+  makeTableStacker,
 } from "@/lib/table";
 import { isRecord } from "@/lib/guards";
 import { array } from "@/lib/array";
-import { lcm, max, sum } from "@/lib/math";
 
 export interface TableFactoryOptions<V> {
   joinPrimitiveArrayValues?: boolean;
@@ -40,10 +36,13 @@ export function makeTableFactory({
   const isProportionalResize = makeProportionalResizeGuard(
     proportionalSizeAdjustmentThreshold
   );
-  const verticalBlockStacker =
-    makeVerticalBlockStacker<JSONPrimitiveOrNull>(isProportionalResize);
-  const verticalTableStacker = makeVerticalTableStacker({
-    verticalBlockStacker,
+  const verticalTableStacker = makeTableStacker({
+    deduplicationComponent: "head",
+    isProportionalResize,
+    cornerCellValue,
+  });
+  const horizontalTableStacker = makeTableStacker({
+    deduplicationComponent: "indexes",
     isProportionalResize,
     cornerCellValue,
   });
@@ -95,57 +94,38 @@ export function makeTableFactory({
     };
   }
 
-  function stackTablesHorizontally(tables: Table[]): Table {
-    const width = tables.map(getWidth).reduce(sum);
-    const heights = tables.map(getHeight);
-    const lcmHeight = heights.reduce(lcm);
-    const maxHeight = heights.reduce(max);
-    const isProportionalResize =
-      (lcmHeight - maxHeight) / maxHeight <=
-      proportionalSizeAdjustmentThreshold;
-    const height = isProportionalResize ? lcmHeight : maxHeight;
-    const rows = array(height, (): Row => []);
-    for (let i = 0; i < tables.length; i++) {
-      const {
-        rows: tableRows,
-        width: tableWidth,
-        height: tableHeight,
-      } = tables[i];
-      const multiplier = Math.floor(height / tableHeight);
-      const plugHeight =
-        isProportionalResize && height - tableHeight * multiplier;
-      for (let j = 0; j < tableRows.length; j++) {
-        const tableRow = tableRows[j];
-        for (let k = 0; k < height; k++) {
-          const row = rows[k];
-          if (k === multiplier * j) {
-            for (let l = 0; l < tableRow.length; l++) {
-              const cell = tableRow[l];
-              row.push({
-                ...cell,
-                height: cell.height * multiplier,
-              });
-            }
-            continue;
-          }
-          if (j === 0 && height - k === plugHeight) {
-            row.push({
-              value: "",
-              height: plugHeight,
-              width: tableWidth,
-              type: CellType.Plug,
-            });
-          }
-        }
-      }
+  function addHeaders(
+    { baked, body, head, indexes }: ComposedTable,
+    titles: string[]
+  ): Table {
+    const hasHeaders = head !== null;
+    const newHead: Row = {
+      cells: [],
+      columns: [],
+    };
+    let w = 0;
+    for (let i = 0; i < baked.length; i++) {
+      const { width } = baked[i];
+      newHead.cells.push({
+        height: 1,
+        width,
+        value: titles[i],
+        type: CellType.Header,
+      });
+      newHead.columns.push(w);
+      w += width;
     }
     return {
-      width,
-      height,
-      rows,
-      tables,
+      head: {
+        rows: hasHeaders ? [newHead, ...head.rows] : [newHead],
+        width: w,
+        height: hasHeaders ? head.height + 1 : 1,
+      },
+      body,
+      indexes,
     };
   }
+
   function transformArray(value: JSONArray): Table {
     const titles = array(value.length, (i) => String(i + 1));
     const tables = value.map(transformValue);
@@ -155,7 +135,7 @@ export function makeTableFactory({
   function transformRecord(value: JSONRecord): Table {
     const titles = Object.keys(value);
     const tables = titles.map((key) => transformValue(value[key]));
-    const stacked = stackTablesHorizontally(tables);
+    const stacked = horizontalTableStacker(tables);
     return addHeaders(stacked, titles);
   }
   function transformValue(value: JSONValue): Table {

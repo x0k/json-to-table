@@ -4,11 +4,13 @@ import { array } from "@/lib/array";
 import {
   Block,
   BlockCompositor,
+  BlockSizeAspect,
   BlockTransform,
   Cell,
   ProportionalResizeGuard,
   Row,
 } from "./core";
+import { mergeRows, rebaseColumns } from "./row";
 
 export function getWidth<V>(block: Block<V>) {
   return block.width;
@@ -178,6 +180,71 @@ export function makeVerticalBlockStacker<V>(
       width,
       height: finalBlocks.map(getHeight).reduce(sum),
       rows: finalBlocks.flatMap((block) => block.rows),
+    };
+  };
+}
+
+export function makeBlockHeightScaler<V>(
+  finalHeight: number
+): BlockTransform<V> {
+  return ({ height, rows, width }) => {
+    const multiplier = Math.floor(finalHeight / height);
+    const newRows = array(
+      finalHeight,
+      (): Row<V> => ({
+        cells: [],
+        columns: [],
+      })
+    );
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const newRow = newRows[i * multiplier];
+      for (let j = 0; j < row.cells.length; j++) {
+        const cell = row.cells[j];
+        newRow.cells.push({
+          ...cell,
+          height: cell.height * multiplier,
+        });
+        newRow.columns.push(row.columns[j]);
+      }
+    }
+    const block: Block<V> = {
+      width,
+      height: finalHeight,
+      rows: newRows,
+    };
+    return finalHeight - height * multiplier === 0
+      ? block
+      : stretchCellsToBottom(block);
+  };
+}
+
+export function makeHorizontalBlockStacker<V>(
+  isProportionalResize: ProportionalResizeGuard
+): BlockCompositor<V> {
+  return (blocks) => {
+    const width = blocks.map(getWidth).reduce(sum);
+    const heights = blocks.map(getHeight);
+    const lcmHeight = heights.reduce(lcm);
+    const maxHeight = heights.reduce(max);
+    const height = isProportionalResize(lcmHeight, maxHeight)
+      ? lcmHeight
+      : maxHeight;
+    const finalBlocks =
+      lcmHeight === maxHeight
+        ? blocks
+        : blocks.map(makeBlockHeightScaler(height));
+    const rows = finalBlocks[0].rows;
+    for (let i = 1; i < finalBlocks.length; i++) {
+      const block = finalBlocks[i];
+      for (let j = 0; j < block.rows.length; j++) {
+        rows[j] = mergeRows(rows[j], block.rows[j]);
+      }
+    }
+    return {
+      width,
+      height,
+      rows,
     };
   };
 }
