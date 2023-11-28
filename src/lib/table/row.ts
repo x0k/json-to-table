@@ -18,15 +18,9 @@ export function shiftRows<V>(rows: Row<V>[], offset: number) {
   }));
 }
 
-export function mergeRows<V>(a: Row<V>, b: Row<V>): Row<V> {
-  const lastACellIndex = a.cells.length - 1;
+export function mergeRows<V>(a: Row<V>, aWidth: number, b: Row<V>): Row<V> {
   return {
     cells: a.cells.concat(b.cells),
-    columns: a.columns.concat(
-      rebaseColumns(
-        b.columns,
-        a.columns[lastACellIndex] + a.cells[lastACellIndex].width
-      )
-    ),
+    columns: a.columns.concat(rebaseColumns(b.columns, aWidth)),
   };
 }

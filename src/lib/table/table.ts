@@ -78,7 +78,9 @@ export function makeTableBaker<V>({
     const useHead = bakeHead && head !== null;
     const useIndexes = bakeIndexes && indexes !== null;
     const withIndexesRows = useIndexes
-      ? indexes.rows.map((row, i) => mergeRows(row, body.rows[i]))
+      ? indexes.rows.map((row, i) =>
+          mergeRows(row, indexes.width, body.rows[i])
+        )
       : body.rows;
     const width = body.width + (useIndexes ? indexes.width : 0);
     if (!useHead) {

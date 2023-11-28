@@ -150,13 +150,16 @@ export function makeBlockWidthScaler<V>(finalWidth: number): BlockTransform<V> {
     const block: Block<V> = {
       width: finalWidth,
       height,
-      rows: rows.map((row) => ({
-        cells: row.cells.map((cell) => ({
-          ...cell,
-          width: cell.width * multiplier,
-        })),
-        columns: row.columns.map((column) => column * multiplier),
-      })),
+      rows:
+        multiplier === 1
+          ? rows
+          : rows.map((row) => ({
+              cells: row.cells.map((cell) => ({
+                ...cell,
+                width: cell.width * multiplier,
+              })),
+              columns: row.columns.map((column) => column * multiplier),
+            })),
     };
     return finalWidth - width * multiplier === 0
       ? block
@@ -174,8 +177,7 @@ export function makeVerticalBlockStacker<V>(
     const width = isProportionalResize(lcmWidth, maxWidth)
       ? lcmWidth
       : maxWidth;
-    const finalBlocks =
-      lcmWidth === maxWidth ? blocks : blocks.map(makeBlockWidthScaler(width));
+    const finalBlocks = blocks.map(makeBlockWidthScaler(width));
     return {
       width,
       height: finalBlocks.map(getHeight).reduce(sum),
@@ -184,11 +186,23 @@ export function makeVerticalBlockStacker<V>(
   };
 }
 
+// TODO: Refactor to move out the newRows logic
 export function makeBlockHeightScaler<V>(
   finalHeight: number
 ): BlockTransform<V> {
   return ({ height, rows, width }) => {
     const multiplier = Math.floor(finalHeight / height);
+    const block: Block<V> = {
+      width,
+      height: finalHeight,
+      rows,
+    };
+    const shouldBeStretched = finalHeight - height * multiplier === 0
+    if (multiplier === 1) {
+      return shouldBeStretched
+        ? block
+        : stretchCellsToBottom(block);
+    }
     const newRows = array(
       finalHeight,
       (): Row<V> => ({
@@ -208,12 +222,8 @@ export function makeBlockHeightScaler<V>(
         newRow.columns.push(row.columns[j]);
       }
     }
-    const block: Block<V> = {
-      width,
-      height: finalHeight,
-      rows: newRows,
-    };
-    return finalHeight - height * multiplier === 0
+    block.rows = newRows;
+    return shouldBeStretched
       ? block
       : stretchCellsToBottom(block);
   };
@@ -230,16 +240,15 @@ export function makeHorizontalBlockStacker<V>(
     const height = isProportionalResize(lcmHeight, maxHeight)
       ? lcmHeight
       : maxHeight;
-    const finalBlocks =
-      lcmHeight === maxHeight
-        ? blocks
-        : blocks.map(makeBlockHeightScaler(height));
+    const finalBlocks = blocks.map(makeBlockHeightScaler(height));
     const rows = finalBlocks[0].rows;
+    let w = finalBlocks[0].width;
     for (let i = 1; i < finalBlocks.length; i++) {
       const block = finalBlocks[i];
       for (let j = 0; j < block.rows.length; j++) {
-        rows[j] = mergeRows(rows[j], block.rows[j]);
+        rows[j] = mergeRows(rows[j], w, block.rows[j]);
       }
+      w += block.width
     }
     return {
       width,
