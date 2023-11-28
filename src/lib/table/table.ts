@@ -102,11 +102,11 @@ export function makeTableBaker<V>({
     const rows: Row<V>[] = [
       prependCell(firstHeadRow, {
         height: head.height,
-        width,
+        width: indexes.width,
         value: cornerCellValue,
         type: CellType.Corner,
       }),
-      ...shiftRows(head.rows.slice(1), width),
+      ...shiftRows(head.rows.slice(1), indexes.width),
       ...withIndexesRows,
     ];
     return {
@@ -345,7 +345,7 @@ export function makeTableStacker<C extends TableComponent, V>({
     const aspect = TABLE_COMPONENT_SIZE_ASPECTS[opposite];
     const scaled =
       deduplicated &&
-      SIZE_ASPECT_SCALE_FACTORIES[aspect]<V>(body[aspect])(body);
+      SIZE_ASPECT_SCALE_FACTORIES[aspect]<V>(body[aspect])(deduplicated);
     // @ts-expect-error too dynamic
     const composedTable: ComposedTable<V> = {
       body,

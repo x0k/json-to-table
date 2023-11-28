@@ -3,6 +3,8 @@ import { JSONPrimitiveOrNull } from "./json";
 import { makeTableFactory } from "./json-to-table";
 import { makeTableBaker } from "./table";
 
+import simpleHeadersDuplication from "./__fixtures__/simple-headers-duplication.json";
+
 describe("makeTableFactory", () => {
   const cornerCellValue = "№";
   const factory = makeTableFactory({ cornerCellValue });
@@ -40,6 +42,39 @@ describe("makeTableFactory", () => {
 | 1 | 2 +----+----+
 |   |   | 11 | 22 |
 +---+---+----+----+
+`);
+  });
+
+  it("Should create table for arrays", () => {
+    const data = [1, 2, [11, 22]];
+    const table = factory(data);
+    const ascii = blockToASCIITable(bake(table));
+    expect(`\n${ascii}\n`).toBe(`
++---+--------+
+| 1 |      1 |
++---+--------+
+| 2 |      2 |
++---+---+----+
+|   | 1 | 11 |
+| 3 +---+----+
+|   | 2 | 22 |
++---+---+----+
+`);
+  });
+
+  it("Should deduplicate table headers", () => {
+    const table = factory(simpleHeadersDuplication);
+    const ascii = blockToASCIITable(bake(table));
+    expect(`\n${ascii}\n`).toBe(`
++---+---+---+---+
+| № | a | b | c |
++---+---+---+---+
+| 1 | 1 | 2 | 3 |
++---+---+---+---+
+| 2 | 4 | 5 | 6 |
++---+---+---+---+
+| 3 | 7 | 8 | 9 |
++---+---+---+---+
 `);
   });
 });
