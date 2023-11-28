@@ -8,7 +8,7 @@ import { createMatrix, fromMatrix } from "./lib/block-matrix";
 import { horizontalMirror, transpose, verticalMirror } from "./lib/matrix";
 
 export enum TransformPreset {
-  Optimal = "Optimal",
+  Default = "Default",
   Manual = "Manual",
 }
 
@@ -20,13 +20,13 @@ export enum OutputFormat {
 
 export const TRANSFORM_SCHEMA: JSONSchema = {
   type: "object",
-  title: "Settings",
+  title: "Options",
   properties: {
     preset: {
       title: "Preset",
       type: "string",
       enum: Object.values(TransformPreset),
-      default: TransformPreset.Optimal,
+      default: TransformPreset.Default,
     },
     transform: {
       title: "Transform",
@@ -55,7 +55,7 @@ export const TRANSFORM_SCHEMA: JSONSchema = {
         {
           properties: {
             preset: {
-              const: TransformPreset.Optimal,
+              const: TransformPreset.Default,
             },
           },
         },
@@ -160,7 +160,7 @@ export type TransformConfig = {
   format: OutputFormat;
   paginate: boolean;
 } & (
-  | { preset: TransformPreset.Optimal }
+  | { preset: TransformPreset.Default }
   | ({
       preset: TransformPreset.Manual;
     } & TableFactoryOptions<JSONPrimitiveOrNull>)
@@ -179,7 +179,7 @@ export function extractTableFactoryOptions(
   config: TransformConfig
 ): TableFactoryOptions<JSONPrimitiveOrNull> {
   switch (config.preset) {
-    case TransformPreset.Optimal:
+    case TransformPreset.Default:
       return {
         collapseIndexes: true,
         joinPrimitiveArrayValues: true,
@@ -200,7 +200,7 @@ export function extractTableFactoryOptions(
         joinPrimitiveArrayValues,
         combineArraysOfObjects,
         proportionalSizeAdjustmentThreshold,
-        cornerCellValue,
+        cornerCellValue: cornerCellValue ?? "",
       };
     }
     default: {
