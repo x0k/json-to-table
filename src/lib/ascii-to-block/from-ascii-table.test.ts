@@ -1,4 +1,4 @@
-import { blockToASCIITable } from "../block-to-ascii-table";
+import { blockToASCII } from "../block-to-ascii";
 
 import { getSimpleMySqlASCIITableSeparatorType } from "./core";
 import { fromASCIITable } from "./from-ascii-table";
@@ -29,7 +29,7 @@ describe("fromASCIITable", () => {
       `,
       getSimpleMySqlASCIITableSeparatorType
     );
-    const ascii = blockToASCIITable(table);
+    const ascii = blockToASCII(table);
     expect(`\n${ascii}`).toBe(`
 +--------------------------------------------+------------------------+
 |                    Col1                    |          Col3          |

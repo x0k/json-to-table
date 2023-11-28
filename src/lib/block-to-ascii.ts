@@ -1,8 +1,7 @@
-
 import { Block, Cell, CellType } from "@/lib/json-table";
 import { array } from "@/lib/array";
 import { matrix } from "@/lib/matrix";
-import { createMatrix } from '@/lib/block-matrix';
+import { createMatrix } from "@/lib/block-matrix";
 
 function getMaxLineLength(rows: string[]) {
   let max = 0;
@@ -29,14 +28,14 @@ function padCellRow(row: string, w: number, cell: Cell, rows: string[]) {
 }
 
 // TODO: get rid of matrix thing since heres is a column property
-export function blockToASCIITable(block: Block) {
+export function blockToASCII(block: Block) {
   const xShift = array(block.width + 1, () => 0);
   const yShift = array(block.height + 1, () => 0);
   const inputMatrix = createMatrix(block, (cell, rowIndex, collIndex) => {
     const content =
-    typeof cell.value === "string"
-    ? cell.value
-    : JSON.stringify(cell.value, null, 2);
+      typeof cell.value === "string"
+        ? cell.value
+        : JSON.stringify(cell.value, null, 2);
     const rows = content.split("\n").map((r) => ` ${r.trim()} `);
     return {
       cell,

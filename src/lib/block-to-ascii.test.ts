@@ -1,7 +1,7 @@
-import { blockToASCIITable } from "./block-to-ascii-table";
+import { blockToASCII } from "./block-to-ascii";
 import { Block, CellType } from "./json-table";
 
-describe("blockToASCIITable", () => {
+describe("blockToASCII", () => {
   it("Should work with simple table", () => {
     const table: Block = {
       width: 1,
@@ -20,7 +20,7 @@ describe("blockToASCIITable", () => {
         },
       ],
     };
-    const ascii = blockToASCIITable(table);
+    const ascii = blockToASCII(table);
     expect(`\n${ascii}`).toBe(
       `
 +---+

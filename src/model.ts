@@ -1,16 +1,15 @@
 import { UiSchema } from "@rjsf/utils";
 
 import { JSONSchema } from "@/lib/json-schema";
-import { TransformOptions, ViewType, VIEW_TYPES } from "@/lib/json-table";
+import { TableFactoryOptions } from "@/lib/json-to-table";
+import { JSONPrimitiveOrNull } from "@/lib/json";
 
 export enum TransformPreset {
   Optimal = "Optimal",
-  Compact = "Compact",
-  Detailed = "Detailed",
   Manual = "Manual",
 }
 
-export enum TransformFormat {
+export enum OutputFormat {
   HTML = "HTML",
   XLSX = "XLSX",
   ASCII = "ASCII",
@@ -26,11 +25,17 @@ export const TRANSFORM_SCHEMA: JSONSchema = {
       enum: Object.values(TransformPreset),
       default: TransformPreset.Optimal,
     },
+    transform: {
+      title: "Transform",
+      description: "Apply a transformation to the output data",
+      type: "boolean",
+      default: false,
+    },
     format: {
       title: "Output format",
       type: "string",
-      enum: Object.values(TransformFormat),
-      default: TransformFormat.HTML,
+      enum: Object.values(OutputFormat),
+      default: OutputFormat.HTML,
     },
     paginate: {
       title: "Paginate",
@@ -47,66 +52,67 @@ export const TRANSFORM_SCHEMA: JSONSchema = {
         {
           properties: {
             preset: {
+              const: TransformPreset.Optimal,
+            },
+          },
+        },
+        {
+          properties: {
+            preset: {
               const: TransformPreset.Manual,
             },
-            headers: {
-              type: "boolean",
-              title: "Headers",
+            collapseIndexes: {
+              title: "Combine nested indexes",
               description:
-                "Enables/disables headers when merging tables by columns",
+                "Combines hierarchical indexes into one cell (1.1, 1.2, ...)",
+              type: "boolean",
               default: true,
             },
-            sortHeaders: {
-              type: "boolean",
-              title: "Sort headers",
-              description: "Enables/disables header sorting",
-              default: false,
-            },
-            indexes: {
-              type: "boolean",
-              title: "Indexes",
-              description:
-                "Enables/disables headers when merging tables line by line",
-              default: false,
-            },
-            concatPrimitiveValues: {
+            joinPrimitiveArrayValues: {
               title: "Combine simple values",
               description:
                 "Combines the values of an array of primitives into one cell (separated by ',')",
               type: "boolean",
               default: true,
             },
-            mergeRecordValues: {
-              title: "Combine complex values",
-              description: "Combines a set of complex values into one",
+            combineArraysOfObjects: {
+              title: "Combine objects",
+              description: "Combine arrays of objects into a single object",
               type: "boolean",
               default: false,
             },
-            recordViewType: {
-              title: "Records presentation",
+            proportionalSizeAdjustmentThreshold: {
+              title: "Proportional size adjustment threshold",
               description:
-                "Manage the display method for a JSON record type value",
-              type: "string",
-              enum: VIEW_TYPES,
-              enumNames: ["Rows", "Columns"],
-              default: ViewType.Headers,
-            } as JSONSchema,
-            arrayViewType: {
-              title: "Arrays presentation",
-              description:
-                "Manage the display method for a JSON array type value",
-              type: "string",
-              enum: VIEW_TYPES,
-              enumNames: ["Rows", "Columns"],
-              default: ViewType.Indexes,
-            } as JSONSchema,
-            proportionalResizeLimit: {
-              title: "Proportional increase limit",
-              description:
-                "Specifies the relative amount by which the maximum element (height/width) can be increased",
+                "Specifies the threshold to which the value (height, width) can be increased for a proportional increase. The default is 1 (by 100%).",
               type: "number",
               minimum: 0,
-              default: 100,
+              default: 1,
+            },
+            cornerCellValue: {
+              title: "Corner cell value",
+              description: "The value of the corner cell.",
+              type: "string",
+              default: "№",
+            },
+          },
+          required: ["proportionalSizeAdjustmentThreshold"],
+        },
+      ],
+    },
+    transform: {
+      oneOf: [
+        {
+          properties: {
+            transform: {
+              const: false,
+            },
+          },
+        },
+        {
+          properties: {
+            transform: {
+              const: true,
             },
             horizontalReflect: {
               type: "boolean",
@@ -124,79 +130,6 @@ export const TRANSFORM_SCHEMA: JSONSchema = {
               default: false,
             },
           },
-          required: [
-            "recordViewType",
-            "arrayViewType",
-            "proportionalResizeLimit",
-          ],
-          dependencies: {
-            headers: {
-              oneOf: [
-                {
-                  properties: {
-                    headers: {
-                      const: true,
-                    },
-                    collapseHeaders: {
-                      title: "Combine nested headers",
-                      description: "Concatenate headers by dot",
-                      type: "boolean",
-                      default: false,
-                    },
-                    deduplicateHeaders: {
-                      title: "Remove duplicate headings",
-                      description: "Removes identical line headers",
-                      type: "boolean",
-                      default: true,
-                    },
-                  },
-                  dependencies: {
-                    deduplicateHeaders: {
-                      oneOf: [
-                        {
-                          properties: {
-                            deduplicateHeaders: {
-                              const: false,
-                            },
-                          },
-                        },
-                        {
-                          properties: {
-                            deduplicateHeaders: {
-                              const: true,
-                            },
-                            supportForHeadersGrouping: {
-                              title: "Support for value grouping",
-                              type: "boolean",
-                              default: true,
-                            },
-                          },
-                        },
-                      ],
-                    },
-                  },
-                },
-              ],
-            },
-            indexes: {
-              oneOf: [
-                {
-                  properties: {
-                    indexes: {
-                      const: true,
-                    },
-                    collapseIndexes: {
-                      title: "Combine nested indexes",
-                      description:
-                        "Makes hierarchical indexes for nested strings (1.1, 1.2, ...)",
-                      type: "boolean",
-                      default: true,
-                    },
-                  },
-                },
-              ],
-            },
-          },
         },
       ],
     },
@@ -206,18 +139,12 @@ export const TRANSFORM_SCHEMA: JSONSchema = {
 export const TRANSFORMED_UI_SCHEMA: UiSchema = {
   "ui:order": [
     "preset",
-    "headers",
-    "sortHeaders",
-    "collapseHeaders",
-    "deduplicateHeaders",
-    "supportForHeadersGrouping",
-    "indexes",
     "collapseIndexes",
-    "concatPrimitiveValues",
-    "mergeRecordValues",
-    "arrayViewType",
-    "recordViewType",
-    "proportionalResizeLimit",
+    "joinPrimitiveArrayValues",
+    "combineArraysOfObjects",
+    "proportionalSizeAdjustmentThreshold",
+    "cornerCellValue",
+    "transform",
     "horizontalReflect",
     "verticalReflect",
     "transpose",
@@ -226,76 +153,56 @@ export const TRANSFORMED_UI_SCHEMA: UiSchema = {
   ],
 };
 
-export type TransformConfig =
-  | { preset: Exclude<TransformPreset, TransformPreset.Manual> }
+export type TransformConfig = {
+  format: OutputFormat;
+  paginate: boolean;
+} & (
+  | { preset: TransformPreset.Optimal }
   | ({
       preset: TransformPreset.Manual;
-    } & TransformOptions);
+    } & TableFactoryOptions<JSONPrimitiveOrNull>)
+) &
+  (
+    | { transform: false }
+    | {
+        transform: true;
+        horizontalReflect: boolean;
+        verticalReflect: boolean;
+        transpose: boolean;
+      }
+  );
 
-export function resolvePreset(config: TransformConfig): TransformOptions {
+export function extractTableFactoryOptions(
+  config: TransformConfig
+): TableFactoryOptions<JSONPrimitiveOrNull> {
   switch (config.preset) {
     case TransformPreset.Optimal:
       return {
-        concatPrimitiveValues: true,
-        mergeRecordValues: false,
-        headers: true,
-        indexes: false,
-        sortHeaders: false,
-        deduplicateHeaders: false,
-        supportForHeadersGrouping: true,
-        recordViewType: ViewType.Headers,
-        arrayViewType: ViewType.Indexes,
-        proportionalResizeLimit: 100,
         collapseIndexes: true,
-        collapseHeaders: true,
-        horizontalReflect: false,
-        verticalReflect: false,
-        transpose: false,
-      };
-    case TransformPreset.Compact:
-      return {
-        concatPrimitiveValues: true,
-        mergeRecordValues: true,
-        headers: false,
-        indexes: false,
-        sortHeaders: true,
-        deduplicateHeaders: false,
-        supportForHeadersGrouping: false,
-        recordViewType: ViewType.Headers,
-        arrayViewType: ViewType.Indexes,
-        proportionalResizeLimit: 0,
-        collapseIndexes: false,
-        collapseHeaders: false,
-        horizontalReflect: false,
-        verticalReflect: false,
-        transpose: false,
-      };
-    case TransformPreset.Detailed:
-      return {
-        concatPrimitiveValues: false,
-        mergeRecordValues: false,
-        headers: true,
-        indexes: true,
-        sortHeaders: false,
-        deduplicateHeaders: false,
-        supportForHeadersGrouping: false,
-        recordViewType: ViewType.Headers,
-        arrayViewType: ViewType.Indexes,
-        proportionalResizeLimit: 100,
-        collapseIndexes: false,
-        collapseHeaders: false,
-        horizontalReflect: false,
-        verticalReflect: false,
-        transpose: false,
+        joinPrimitiveArrayValues: true,
+        combineArraysOfObjects: false,
+        proportionalSizeAdjustmentThreshold: 1,
+        cornerCellValue: "№",
       };
     case TransformPreset.Manual: {
-      const { preset, ...rest } = config;
-      return rest;
+      const {
+        collapseIndexes,
+        joinPrimitiveArrayValues,
+        combineArraysOfObjects,
+        proportionalSizeAdjustmentThreshold,
+        cornerCellValue,
+      } = config;
+      return {
+        collapseIndexes,
+        joinPrimitiveArrayValues,
+        combineArraysOfObjects,
+        proportionalSizeAdjustmentThreshold,
+        cornerCellValue,
+      };
     }
-    default:
-      throw new Error(
-        //@ts-expect-error
-        `Unexpected preset "${config.preset ?? JSON.stringify(config)}"`
-      );
+    default: {
+      const n: never = config;
+      throw new Error(`Unexpected preset "${JSON.stringify(n)}"`);
+    }
   }
 }

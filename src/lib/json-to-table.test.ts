@@ -1,4 +1,4 @@
-import { blockToASCIITable } from "./block-to-ascii-table";
+import { blockToASCII } from "./block-to-ascii";
 import { JSONPrimitiveOrNull } from "./json";
 import { makeTableFactory } from "./json-to-table";
 import { makeTableBaker } from "./json-table";
@@ -19,7 +19,7 @@ describe("makeTableFactory", () => {
     const data = [false, 12345, "abcde"];
     for (const value of data) {
       const table = factory(value);
-      const ascii = blockToASCIITable(bake(table));
+      const ascii = blockToASCII(bake(table));
       expect(`\n${ascii}`).toBe(`
 +-------+
 | ${value} |
@@ -34,7 +34,7 @@ describe("makeTableFactory", () => {
       c: { aa: 11, bb: 22 },
     };
     const table = factory(data);
-    const ascii = blockToASCIITable(bake(table));
+    const ascii = blockToASCII(bake(table));
     expect(`\n${ascii}\n`).toBe(`
 +---+---+---------+
 | a | b |    c    |
@@ -49,7 +49,7 @@ describe("makeTableFactory", () => {
   it("Should create table for arrays", () => {
     const data = [1, 2, [11, 22]];
     const table = factory(data);
-    const ascii = blockToASCIITable(bake(table));
+    const ascii = blockToASCII(bake(table));
     expect(`\n${ascii}\n`).toBe(`
 +---+--------+
 | 1 |      1 |
@@ -73,7 +73,7 @@ describe("makeTableFactory", () => {
       [11, 22],
     ];
     const table = factory(data);
-    const ascii = blockToASCIITable(bake(table));
+    const ascii = blockToASCII(bake(table));
     expect(`\n${ascii}\n`).toBe(`
 +-----+----+
 | 1.1 |  1 |
@@ -89,7 +89,7 @@ describe("makeTableFactory", () => {
 
   it("Should deduplicate table headers", () => {
     const table = factory(simpleHeadersDuplication);
-    const ascii = blockToASCIITable(bake(table));
+    const ascii = blockToASCII(bake(table));
     expect(`\n${ascii}\n`).toBe(`
 +---+---+---+---+
 | № | a | b | c |
@@ -105,7 +105,7 @@ describe("makeTableFactory", () => {
 
   it("Should deduplicate table indexes", () => {
     const table = factory(simpleIndexesDeduplication);
-    const ascii = blockToASCIITable(bake(table));
+    const ascii = blockToASCII(bake(table));
     expect(`\n${ascii}\n`).toBe(`
 +---+---+---+---+
 | № | a | b | c |
