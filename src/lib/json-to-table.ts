@@ -24,6 +24,7 @@ export interface TableFactoryOptions<V> {
   combineArraysOfObjects?: boolean;
   /** proportional size adjustment threshold */
   proportionalSizeAdjustmentThreshold?: number;
+  collapseIndexes?: boolean;
   cornerCellValue: V;
 }
 
@@ -32,6 +33,7 @@ export function makeTableFactory({
   joinPrimitiveArrayValues,
   proportionalSizeAdjustmentThreshold = 1,
   cornerCellValue,
+  collapseIndexes,
 }: TableFactoryOptions<JSONPrimitiveOrNull>) {
   const isProportionalResize = makeProportionalResizeGuard(
     proportionalSizeAdjustmentThreshold
@@ -52,6 +54,7 @@ export function makeTableFactory({
     titles: string[]
   ): Table {
     const hasIndexes = indexes !== null;
+    const collapse = hasIndexes && collapseIndexes;
     const indexesRows = hasIndexes
       ? indexes.rows.slice()
       : array(body.height, () => ({
@@ -61,24 +64,44 @@ export function makeTableFactory({
     let h = 0;
     for (let i = 0; i < baked.length; i++) {
       const height = baked[i].height;
-      indexesRows[h] = {
-        cells: [
-          {
-            height,
-            width: 1,
-            value: titles[i],
-            type: CellType.Index,
-          },
-        ],
-        columns: [0, ...rebaseColumns(indexesRows[h].columns, 1)],
-      };
-      if (hasIndexes) {
-        for (let j = 1; j < height; j++) {
-          const hj = h + j;
-          indexesRows[hj] = {
-            cells: indexesRows[hj].cells,
-            columns: rebaseColumns(indexesRows[hj].columns, 1),
+      if (collapse) {
+        let y = 0;
+        while (y < height) {
+          const hy = h + y;
+          const cells = indexesRows[hy].cells;
+          indexesRows[hy] = {
+            cells: [
+              {
+                ...cells[0],
+                value: `${titles[i]}.${cells[0].value}`,
+              },
+              ...cells.slice(1),
+            ],
+            columns: indexesRows[hy].columns,
           };
+          y += cells[0].height;
+        }
+      } else {
+        indexesRows[h] = {
+          cells: [
+            {
+              height,
+              width: 1,
+              value: titles[i],
+              type: CellType.Index,
+            },
+            ...indexesRows[h].cells,
+          ],
+          columns: [0, ...rebaseColumns(indexesRows[h].columns, 1)],
+        };
+        if (hasIndexes) {
+          for (let j = 1; j < height; j++) {
+            const hj = h + j;
+            indexesRows[hj] = {
+              cells: indexesRows[hj].cells,
+              columns: rebaseColumns(indexesRows[hj].columns, 1),
+            };
+          }
         }
       }
       h += height;
@@ -88,7 +111,7 @@ export function makeTableFactory({
       body,
       indexes: {
         rows: indexesRows,
-        width: hasIndexes ? indexes.width + 1 : 1,
+        width: hasIndexes ? indexes.width + Number(!collapseIndexes) : 1,
         height: h,
       },
     };

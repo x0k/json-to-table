@@ -63,6 +63,30 @@ describe("makeTableFactory", () => {
 `);
   });
 
+  it("Should create table for arrays with indexes collapse", () => {
+    const factory = makeTableFactory({
+      cornerCellValue,
+      collapseIndexes: true,
+    });
+    const data = [
+      [1, 2],
+      [11, 22],
+    ];
+    const table = factory(data);
+    const ascii = blockToASCIITable(bake(table));
+    expect(`\n${ascii}\n`).toBe(`
++-----+----+
+| 1.1 |  1 |
++-----+----+
+| 1.2 |  2 |
++-----+----+
+| 2.1 | 11 |
++-----+----+
+| 2.2 | 22 |
++-----+----+
+`);
+  });
+
   it("Should deduplicate table headers", () => {
     const table = factory(simpleHeadersDuplication);
     const ascii = blockToASCIITable(bake(table));
