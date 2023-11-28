@@ -1,12 +1,12 @@
 import { array } from "@/lib/array";
 import { Matrix, matrix } from "@/lib/matrix";
 
-import { Table, Row, CellType, Cell } from "./model";
+import { Block, Row, CellType, Cell } from "@/lib/json-table";
 
 const UNDEFINED_CELL = Symbol("undefined cell");
 
 export function createMatrix<T, R>(
-  { height, width, rows }: Table<T>,
+  { height, width, rows }: Block<T>,
   getValue: (
     cell: Cell<T>,
     rowIndex: number,
@@ -21,16 +21,13 @@ export function createMatrix<T, R>(
   );
   for (let i = 0; i < height; i++) {
     const row = rows[i];
-    for (let j = 0; j < row.length; j++) {
-      const cell = row[j];
+    for (let j = 0; j < row.cells.length; j++) {
+      const cell = row.cells[j];
+      const col = row.columns[j];
       const { height: cellHeight, width: cellWidth } = cell;
-      const position = m[i].indexOf(UNDEFINED_CELL);
-      if (position === -1) {
-        throw new Error("Invalid table");
-      }
-      const value = getValue(cell, i, position, j);
+      const value = getValue(cell, i, col, j);
       for (let h = i; h < i + cellHeight && h < height; h++) {
-        for (let w = position; w < position + cellWidth && w < width; w++) {
+        for (let w = col; w < col + cellWidth && w < width; w++) {
           m[h][w] = value;
         }
       }
@@ -44,11 +41,14 @@ export function fromMatrix<T, R>(
   matrix: Matrix<T>,
   getCellType: (value: T, rowIndex: number, colIndex: number) => CellType,
   getCellValue: (value: T, rowIndex: number, colIndex: number) => R
-): Table<R> {
+): Block<R> {
   const height = matrix.length;
   const width = matrix[0].length;
   const cells = new Set<T>();
-  const rows = array(height, (): Row<R> => []);
+  const rows = array(height, (): Row<R> => ({
+    cells: [],
+    columns: [],
+  }));
   for (let i = 0; i < height; i++) {
     let j = 0;
     while (j < width) {
@@ -65,12 +65,13 @@ export function fromMatrix<T, R>(
       while (j < width && matrix[i][j] === cell) {
         j++;
       }
-      rows[i].push({
+      rows[i].cells.push({
         height: h,
         width: j - wStart,
         type: getCellType(cell, i, wStart),
         value: getCellValue(cell, i, wStart),
       });
+      rows[i].columns.push(wStart);
       cells.add(cell);
     }
   }

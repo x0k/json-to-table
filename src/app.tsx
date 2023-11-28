@@ -3,29 +3,36 @@ import { Stack, Textarea, Button, Heading } from "@chakra-ui/react";
 import { Form } from "@rjsf/chakra-ui";
 import validator from "@rjsf/validator-ajv8";
 
-import { makeTableTransformer, Table } from "@/lib/json-table";
-import { isJsonPrimitiveOrNull, JSONValue } from "@/lib/json";
+import { Block, makeTableBaker } from "@/lib/json-table";
+import {
+  isJsonPrimitiveOrNull,
+  JSONPrimitiveOrNull,
+  JSONValue,
+} from "@/lib/json";
 import { JSONParseStatus, jsonTryParse } from "@/lib/json-parser";
 import { Entry, transformValue } from "@/lib/entry";
-import { createPage, renderPage } from "@/lib/browser";
-import { makeHTMLPageContent, HTML_TABLE_STYLES } from "@/lib/json-table-html";
-import { makeWorkBook } from "@/lib/json-table-xlsx";
+import { createPage } from "@/lib/browser";
+import { escapeHtml, renderHTMLPage } from "@/lib/html";
+import { makeHTMLPageContent, HTML_TABLE_STYLES } from "@/lib/block-to-html";
+import { makeWorkBook } from "@/lib/block-to-xlsx";
 import { max, sum } from "@/lib/math";
 import {
   createFileURL,
   createXLSBlob,
   makeDownloadFileByUrl,
 } from "@/lib/file";
-import { toASCIITable } from "@/lib/json-table-ascii/to-ascii-table";
+import { blockToASCII } from "@/lib/block-to-ascii";
+import { makeTableFactory } from "@/lib/json-to-table";
 
 import {
-  resolvePreset,
+  extractTableFactoryOptions,
   TransformConfig,
   TRANSFORMED_UI_SCHEMA,
-  TransformFormat,
+  OutputFormat,
   TransformPreset,
   TRANSFORM_SCHEMA,
-} from "./model";
+  makeTransformApplicator,
+} from "./core";
 
 function useChangeHandler(handler: (value: string) => void) {
   return useCallback(
@@ -48,6 +55,9 @@ export function App() {
   const [data, setData] = useState("");
   const [transformData, setTransformData] = useState<TransformConfig>({
     preset: TransformPreset.Optimal,
+    transform: false,
+    format: OutputFormat.HTML,
+    paginate: false,
   });
   const handleDataChange = useChangeHandler(setData);
   return (
@@ -62,9 +72,14 @@ export function App() {
         formData={transformData}
         onChange={({ formData }) => setTransformData(formData)}
         onSubmit={({ formData }) => {
-          const tableTransformer = makeTableTransformer(
-            resolvePreset(formData)
-          );
+          const options = extractTableFactoryOptions(formData);
+          const tableTransformer = makeTableFactory(options);
+          const transformApplicator = makeTransformApplicator(formData);
+          const bake = makeTableBaker<JSONPrimitiveOrNull>({
+            cornerCellValue: options.cornerCellValue,
+            bakeHead: true,
+            bakeIndexes: true,
+          });
           const tableData = makeTableData(data);
           const pagesData: Entry<JSONValue>[] =
             isJsonPrimitiveOrNull(tableData) || !formData.paginate
@@ -76,22 +91,25 @@ export function App() {
               : Object.keys(tableData).map(
                   (key) => [key, tableData[key]] as Entry<JSONValue>
                 );
-          const pagesTables = pagesData.map(transformValue(tableTransformer));
-          switch (formData.format as TransformFormat) {
-            case TransformFormat.HTML: {
+          const pagesTables = pagesData
+            .map(transformValue(tableTransformer))
+            .map(transformValue(bake))
+            .map(transformValue(transformApplicator));
+          switch (formData.format as OutputFormat) {
+            case OutputFormat.HTML: {
               return createPage(
-                renderPage(
+                renderHTMLPage(
                   "Table",
                   makeHTMLPageContent(pagesTables),
                   HTML_TABLE_STYLES
                 )
               );
             }
-            case TransformFormat.ASCII: {
-              const renderTable = (t: Table) =>
-                `<pre><code>${toASCIITable(t)}</code></pre>`;
+            case OutputFormat.ASCII: {
+              const renderTable = (t: Block) =>
+                `<pre><code>${escapeHtml(blockToASCII(t))}</code></pre>`;
               return createPage(
-                renderPage(
+                renderHTMLPage(
                   "Table",
                   pagesTables.length > 1
                     ? pagesTables
@@ -104,7 +122,7 @@ export function App() {
                 )
               );
             }
-            case TransformFormat.XLSX:
+            case OutputFormat.XLSX:
               return makeWorkBook(pagesTables, {
                 columnWidth: (column, i, m, table) => {
                   const counts = column.map((cell) => cell.count);
@@ -123,7 +141,7 @@ export function App() {
                 .then(createFileURL)
                 .then(makeDownloadFileByUrl("table.xlsx"));
             default:
-              throw new Error(`Unexpected transform format`);
+              throw new Error(`Unexpected output format`);
           }
         }}
       >

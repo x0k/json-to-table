@@ -1,11 +1,19 @@
-import { Cell, CellType, Table, createMatrix } from "@/lib/json-table";
+import { Block, Cell, CellType } from "@/lib/json-table";
 import { array } from "@/lib/array";
 import { matrix } from "@/lib/matrix";
+import { createMatrix } from "@/lib/block-matrix";
 
-import { getMaxLineLength } from "./core";
+function getMaxLineLength(rows: string[]) {
+  let max = 0;
+  for (let i = 0; i < rows.length; i++) {
+    max = Math.max(max, rows[i].length);
+  }
+  return max;
+}
 
 function padCellRow(row: string, w: number, cell: Cell, rows: string[]) {
   switch (cell.type) {
+    case CellType.Corner:
     case CellType.Header:
     case CellType.Index: {
       const p = Math.floor((w - row.length) / 2);
@@ -20,10 +28,11 @@ function padCellRow(row: string, w: number, cell: Cell, rows: string[]) {
   }
 }
 
-export function toASCIITable(table: Table) {
-  const xShift = array(table.width + 1, () => 0);
-  const yShift = array(table.height + 1, () => 0);
-  const inputMatrix = createMatrix(table, (cell, rowIndex, collIndex) => {
+// TODO: get rid of matrix thing since heres is a column property
+export function blockToASCII(block: Block) {
+  const xShift = array(block.width + 1, () => 0);
+  const yShift = array(block.height + 1, () => 0);
+  const inputMatrix = createMatrix(block, (cell, rowIndex, collIndex) => {
     const content =
       typeof cell.value === "string"
         ? cell.value
@@ -38,8 +47,8 @@ export function toASCIITable(table: Table) {
     };
   });
   xShift[0] = yShift[0] = 1;
-  for (let i = 0; i < table.height; i++) {
-    for (let j = 0; j < table.width; j++) {
+  for (let i = 0; i < block.height; i++) {
+    for (let j = 0; j < block.width; j++) {
       const cell = inputMatrix[i][j];
       if (cell.collIndex === j) {
         xShift[j + 1] = Math.max(
@@ -56,18 +65,18 @@ export function toASCIITable(table: Table) {
     }
   }
   // Accumulate
-  for (let i = 1; i <= table.width; i++) {
+  for (let i = 1; i <= block.width; i++) {
     xShift[i] += xShift[i - 1];
   }
-  for (let i = 1; i <= table.height; i++) {
+  for (let i = 1; i <= block.height; i++) {
     yShift[i] += yShift[i - 1];
   }
-  const height = table.height + yShift[table.height];
-  const width = table.width + xShift[table.width];
+  const height = block.height + yShift[block.height];
+  const width = block.width + xShift[block.width];
   const outMatrix = matrix<string | null>(height, width, () => null);
   const placed = new Set<Cell>();
-  for (let i = 0; i < table.height; i++) {
-    for (let j = 0; j < table.width; j++) {
+  for (let i = 0; i < block.height; i++) {
+    for (let j = 0; j < block.width; j++) {
       const { cell, rows } = inputMatrix[i][j];
       if (placed.has(cell)) {
         continue;
@@ -127,7 +136,6 @@ export function toASCIITable(table: Table) {
         continue;
       }
       outMatrix[i][j] = "n";
-      continue;
     }
   }
   return outMatrix.map((row) => row.join("")).join("\n");
