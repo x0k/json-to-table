@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { Stack, Textarea, Button, Heading } from "@chakra-ui/react";
+import { Stack, Textarea, Button, Heading, Link } from "@chakra-ui/react";
 import { Form } from "@rjsf/chakra-ui";
 import validator from "@rjsf/validator-ajv8";
 
@@ -68,7 +68,9 @@ export function App() {
   const handleDataChange = useChangeHandler(setData);
   return (
     <Stack p={8} maxW="6xl" mx="auto" gap={4}>
-      <Heading variant={"h1"} >JSON to Table</Heading>
+      <Heading variant={"h1"} flexGrow={1}>
+        JSON to Table
+      </Heading>
       <Stack direction="row" gap={2} alignItems="center">
         <Button onClick={() => sample("test", setData)}>Test</Button>
         <Button onClick={() => sample("deduplication", setData)}>
@@ -76,6 +78,16 @@ export function App() {
         </Button>
         <Button onClick={() => sample("company", setData)}>Company</Button>
         <Button onClick={() => sample("large", setData)}>Large</Button>
+        <Button
+          ml="auto"
+          variant="outline"
+          colorScheme="teal"
+          as={Link}
+          href="https://github.com/x0k/json-to-table"
+          target="_blank"
+        >
+          GitHub
+        </Button>
       </Stack>
       <Textarea
         placeholder="Paste JSON here"
