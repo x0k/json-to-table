@@ -1,4 +1,3 @@
-import { lcm, max } from "@/lib/math";
 import { array } from "@/lib/array";
 
 import {
@@ -33,37 +32,27 @@ export interface BakeOptions<V> {
 
 export function tryDeduplicateComponent<V>(
   tables: Table<V>[],
-  component: "head" | "indexes",
-  isProportionalSizeAdjustment: ProportionalResizeGuard
+  component: "head" | "indexes"
 ): Block<V> | null {
   const { [component]: cmp } = tables[0];
   if (!cmp) {
     return null;
   }
+  // Currently, I can't imagine deduplicating blocks with different sizes
+  // Maybe in future this algorithm should be more inclusive
   const blocks = [cmp];
-  let lcmHeight = cmp.height;
-  let maxHeight = cmp.height;
-  let minIndex = 0;
-  const minAspect = TABLE_COMPONENT_SIZE_ASPECTS[component];
+  const { height, width } = cmp;
   for (let i = 1; i < tables.length; i++) {
     const cmp = tables[i][component];
-    if (!cmp) {
+    if (!cmp || cmp.height !== height || cmp.width !== width) {
       return null;
     }
-    lcmHeight = lcm(lcmHeight, cmp.height);
-    maxHeight = max(maxHeight, cmp.height);
     blocks.push(cmp);
-    if (cmp[minAspect] < blocks[minIndex][minAspect]) {
-      minIndex = i;
-    }
   }
-  if (
-    !isProportionalSizeAdjustment(lcmHeight, maxHeight) ||
-    !areProportionalBlocksEqual(blocks, lcmHeight)
-  ) {
+  if (!areProportionalBlocksEqual(blocks, height)) {
     return null;
   }
-  return blocks[minIndex];
+  return cmp;
 }
 
 export function makeTableBaker<V>({
@@ -194,92 +183,6 @@ export function tryStackTableComponent<V>(
   return compose(blocks);
 }
 
-export interface VerticalTableStackerOptions<V> {
-  isProportionalResize: ProportionalResizeGuard;
-  verticalBlockStacker: BlockCompositor<V>;
-  cornerCellValue: V;
-}
-
-export function makeVerticalTableStacker<V>({
-  cornerCellValue,
-  verticalBlockStacker,
-  isProportionalResize,
-}: VerticalTableStackerOptions<V>): TableCompositor<V> {
-  return function stackTablesVertically(tables) {
-    const deduplicatedHead = tryDeduplicateComponent(
-      tables,
-      "head",
-      isProportionalResize
-    );
-    const bakeHead = deduplicatedHead === null;
-    const stackedIndexes = tryStackTableComponent(
-      tables,
-      "indexes",
-      bakeHead,
-      cornerCellValue,
-      verticalBlockStacker
-    );
-    const bakeTable = makeTableBaker({
-      bakeHead,
-      bakeIndexes: stackedIndexes === null,
-      cornerCellValue,
-    });
-    const baked = tables.map(bakeTable);
-    const body = verticalBlockStacker(baked);
-    return {
-      body,
-      head:
-        deduplicatedHead &&
-        makeBlockWidthScaler<V>(body.width)(deduplicatedHead),
-      indexes: stackedIndexes,
-      baked,
-    };
-  };
-}
-
-export interface HorizontalTableStackerOptions<V> {
-  isProportionalResize: ProportionalResizeGuard;
-  horizontalBlockStacker: BlockCompositor<V>;
-  cornerCellValue: V;
-}
-
-export function makeHorizontalTableStacker<V>({
-  cornerCellValue,
-  horizontalBlockStacker,
-  isProportionalResize,
-}: HorizontalTableStackerOptions<V>): TableCompositor<V> {
-  return (tables) => {
-    const deduplicatedIndexes = tryDeduplicateComponent(
-      tables,
-      "indexes",
-      isProportionalResize
-    );
-    const bakeIndexes = deduplicatedIndexes === null;
-    const stackedHeads = tryStackTableComponent(
-      tables,
-      "head",
-      bakeIndexes,
-      cornerCellValue,
-      horizontalBlockStacker
-    );
-    const bakeTable = makeTableBaker({
-      bakeIndexes,
-      bakeHead: stackedHeads === null,
-      cornerCellValue,
-    });
-    const baked = tables.map(bakeTable);
-    const body = horizontalBlockStacker(baked);
-    return {
-      body,
-      indexes:
-        deduplicatedIndexes &&
-        makeBlockHeightScaler<V>(body.height)(deduplicatedIndexes),
-      head: stackedHeads,
-      baked,
-    };
-  };
-}
-
 export interface TableStackerOptions<C extends TableComponent, V> {
   isProportionalResize: ProportionalResizeGuard;
   cornerCellValue: V;
@@ -323,8 +226,7 @@ export function makeTableStacker<C extends TableComponent, V>({
     const opposite = TABLE_COMPONENT_OPPOSITES[deduplicationComponent];
     const deduplicated = tryDeduplicateComponent(
       tables,
-      deduplicationComponent,
-      isProportionalResize
+      deduplicationComponent
     );
     const bake = deduplicated === null;
     const stacked = tryStackTableComponent(

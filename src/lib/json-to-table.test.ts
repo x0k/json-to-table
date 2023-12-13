@@ -6,6 +6,7 @@ import { makeTableBaker } from "./json-table";
 import simpleHeadersDuplication from "./__fixtures__/simple-headers-duplication.json";
 import simpleIndexesDeduplication from "./__fixtures__/simple-indexes-deduplication.json";
 import parsingError from "./__fixtures__/parsing-error.json";
+import differentHeaders from "./__fixtures__/different-headers.json";
 
 describe("makeTableFactory", () => {
   const cornerCellValue = "№";
@@ -137,4 +138,20 @@ describe("makeTableFactory", () => {
 +---+------+-------+-------------+------+
 `);
   });
+
+  it('Should not deduplicate objects with different headers', () => {
+    const table = factory(differentHeaders as any);
+    const ascii = blockToASCII(bake(table));
+    expect(`\n${ascii}\n`).toBe(`
++---+------------------------------+---------------------+
+|   |         character_id         |       item_id       |
+| 1 +------------------------------+---------------------+
+|   |          5428010618020694593 |                  95 |
++---+---------------------+--------+-------+-------------+
+|   |    character_id     |    item_id     | stack_count |
+| 2 +---------------------+----------------+-------------+
+|   | 5428010618020694593 |            101 |           4 |
++---+---------------------+----------------+-------------+
+`)
+  })
 });
