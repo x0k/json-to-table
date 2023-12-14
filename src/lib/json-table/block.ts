@@ -19,24 +19,48 @@ export function getHeight<V>(block: Block<V>) {
   return block.height;
 }
 
-export function areProportionalBlocksEqual<V>(
-  blocks: Block<V>[],
-  lcmHeight: number
-) {
-  const multipliers = blocks.map((b) => lcmHeight / b.height);
-  const firstBlockRows = blocks[0].rows;
-  const firstBlockMultiplier = multipliers[0];
-  let i = 0;
-  let p = 0;
+export interface PreProportionalBlocksEqualOptions<V> {
+  blocks: Block<V>[];
+  lcmWidth: number;
+  lcmHeight: number;
+}
+
+export function areProportionalBlocksEqual<V>({
+  blocks,
+  lcmWidth,
+  lcmHeight,
+}: PreProportionalBlocksEqualOptions<V>) {
+  const blocksRows = blocks.map((b) => {
+    const wMultiplier = lcmWidth / b.width;
+    const hMultiplier = lcmHeight / b.height;
+    const newRows = array(lcmHeight, () => new Array<Cell<V>>(lcmWidth));
+    for (let i = 0; i < b.rows.length; i++) {
+      const { cells, columns } = b.rows[i];
+      for (let j = 0; j < cells.length; j++) {
+        const cell = cells[j];
+        const row = i * hMultiplier;
+        const rowEnd = row + cell.height * hMultiplier;
+        const col = columns[j] * wMultiplier;
+        const colEnd = col + cell.width * wMultiplier;
+        for (let k = row; k < rowEnd; k++) {
+          const newRow = newRows[k];
+          for (let l = col; l < colEnd; l++) {
+            newRow[l] = cell;
+          }
+        }
+      }
+    }
+    return newRows;
+  });
   // Loop over rows
-  while ((p = i * firstBlockMultiplier) < firstBlockRows.length) {
-    const firstBlockRow = firstBlockRows[p].cells;
+  for (let i = 0; i < lcmHeight; i++) {
+    const firstBlockRow = blocksRows[0][i];
     // Loop over cells
-    for (let j = 0; j < firstBlockRow.length; j++) {
+    for (let j = 0; j < lcmWidth; j++) {
       const firstBlockCell = firstBlockRow[j];
       // Loop over other blocks
       for (let k = 1; k < blocks.length; k++) {
-        const cell = blocks[k].rows[i * multipliers[k]].cells[j];
+        const cell = blocksRows[k][i][j];
         if (!cell || firstBlockCell.value !== cell.value) {
           return false;
         }

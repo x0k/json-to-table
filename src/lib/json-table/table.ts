@@ -1,4 +1,5 @@
 import { array } from "@/lib/array";
+import { lcm, max } from "@/lib/math";
 
 import {
   Block,
@@ -32,24 +33,38 @@ export interface BakeOptions<V> {
 
 export function tryDeduplicateComponent<V>(
   tables: Table<V>[],
-  component: "head" | "indexes"
+  component: "head" | "indexes",
+  proportionalResizeGuard: ProportionalResizeGuard
 ): Block<V> | null {
   const { [component]: cmp } = tables[0];
   if (!cmp) {
     return null;
   }
-  // Currently, I can't imagine deduplicating blocks with different sizes
-  // Maybe in future this algorithm should be more inclusive
   const blocks = [cmp];
-  const { height, width } = cmp;
+  let lcmHeight = cmp.height;
+  let lcmWidth = cmp.width;
+  let maxHeight = cmp.height;
+  let maxWidth = cmp.width;
   for (let i = 1; i < tables.length; i++) {
     const cmp = tables[i][component];
-    if (!cmp || cmp.height !== height || cmp.width !== width) {
+    if (!cmp) {
       return null;
     }
+    maxHeight = max(maxHeight, cmp.height);
+    maxWidth = max(maxWidth, cmp.width);
+    lcmHeight = lcm(lcmHeight, cmp.height);
+    lcmWidth = lcm(lcmWidth, cmp.width);
     blocks.push(cmp);
   }
-  if (!areProportionalBlocksEqual(blocks, height)) {
+  if (
+    !proportionalResizeGuard(lcmHeight, maxHeight) ||
+    !proportionalResizeGuard(lcmWidth, maxWidth) ||
+    !areProportionalBlocksEqual({
+      blocks,
+      lcmWidth,
+      lcmHeight,
+    })
+  ) {
     return null;
   }
   return cmp;
@@ -226,7 +241,8 @@ export function makeTableStacker<C extends TableComponent, V>({
     const opposite = TABLE_COMPONENT_OPPOSITES[deduplicationComponent];
     const deduplicated = tryDeduplicateComponent(
       tables,
-      deduplicationComponent
+      deduplicationComponent,
+      isProportionalResize
     );
     const bake = deduplicated === null;
     const stacked = tryStackTableComponent(

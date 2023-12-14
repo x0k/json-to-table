@@ -3,6 +3,7 @@ import {
   stretchCellsToBottom,
   stretchCellsToRight,
   makeBlockHeightScaler,
+  areProportionalBlocksEqual,
 } from "./block";
 
 describe("stretchCellsToBottom", () => {
@@ -190,7 +191,7 @@ describe("stretchCellsToRight", () => {
 
 describe("makeBlockHeightScaler", () => {
   it("Should scale correctly and fill empty cells", () => {
-    const scale = makeBlockHeightScaler(5)
+    const scale = makeBlockHeightScaler(5);
     const data: Block = {
       height: 2,
       width: 2,
@@ -280,9 +281,131 @@ describe("makeBlockHeightScaler", () => {
         {
           cells: [],
           columns: [],
-        }
-      ]
-    }
+        },
+      ],
+    };
     expect(scale(data)).toEqual(expected);
+  });
+});
+
+describe("areProportionalBlocksEqual", () => {
+  it("Should return true for equal blocks", () => {
+    expect(
+      areProportionalBlocksEqual({
+        blocks: [
+          {
+            height: 1,
+            width: 2,
+            rows: [
+              {
+                cells: [
+                  {
+                    height: 1,
+                    width: 1,
+                    value: 1,
+                    type: CellType.Value,
+                  },
+                  {
+                    height: 1,
+                    width: 1,
+                    value: 2,
+                    type: CellType.Value,
+                  },
+                ],
+                columns: [0, 1],
+              },
+            ],
+          },
+          {
+            height: 2,
+            width: 4,
+            rows: [
+              {
+                cells: [
+                  {
+                    height: 2,
+                    width: 2,
+                    value: 1,
+                    type: CellType.Value,
+                  },
+                  {
+                    height: 2,
+                    width: 2,
+                    value: 2,
+                    type: CellType.Value,
+                  },
+                ],
+                columns: [0, 2],
+              },
+            ],
+          },
+        ],
+        lcmHeight: 2,
+        lcmWidth: 4,
+      })
+    ).toBe(true);
+  });
+
+  it("Should return false for unequal blocks", () => {
+    expect(
+      areProportionalBlocksEqual({
+        blocks: [
+          {
+            height: 1,
+            width: 2,
+            rows: [
+              {
+                cells: [
+                  {
+                    height: 1,
+                    width: 1,
+                    value: 1,
+                    type: CellType.Value,
+                  },
+                  {
+                    height: 1,
+                    width: 1,
+                    value: 2,
+                    type: CellType.Value,
+                  },
+                ],
+                columns: [0, 1],
+              },
+            ],
+          },
+          {
+            height: 1,
+            width: 3,
+            rows: [
+              {
+                cells: [
+                  {
+                    height: 1,
+                    width: 1,
+                    value: 1,
+                    type: CellType.Value,
+                  },
+                  {
+                    height: 1,
+                    width: 1,
+                    value: 2,
+                    type: CellType.Value,
+                  },
+                  {
+                    height: 1,
+                    width: 1,
+                    value: 3,
+                    type: CellType.Value,
+                  },
+                ],
+                columns: [0, 1, 2],
+              },
+            ],
+          },
+        ],
+        lcmWidth: 6,
+        lcmHeight: 1,
+      })
+    ).toBe(false);
   });
 });
