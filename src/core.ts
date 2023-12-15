@@ -84,6 +84,13 @@ export const TRANSFORM_SCHEMA: JSONSchema = {
               type: "boolean",
               default: false,
             },
+            stabilizeOrderOfPropertiesInArraysOfObjects: {
+              title: "Stabilize order of properties",
+              description:
+                "Stabilizing the order in which properties are displayed for arrays of objects",
+              type: "boolean",
+              default: true,
+            },
             proportionalSizeAdjustmentThreshold: {
               title: "Proportional size adjustment threshold",
               description:
@@ -145,6 +152,7 @@ export const TRANSFORMED_UI_SCHEMA: UiSchema = {
     "collapseIndexes",
     "joinPrimitiveArrayValues",
     "combineArraysOfObjects",
+    "stabilizeOrderOfPropertiesInArraysOfObjects",
     "proportionalSizeAdjustmentThreshold",
     "cornerCellValue",
     "transform",
@@ -185,6 +193,7 @@ export function extractTableFactoryOptions(
         joinPrimitiveArrayValues: true,
         combineArraysOfObjects: false,
         proportionalSizeAdjustmentThreshold: 1,
+        stabilizeOrderOfPropertiesInArraysOfObjects: true,
         cornerCellValue: "№",
       };
     case TransformPreset.Manual: {
@@ -192,6 +201,7 @@ export function extractTableFactoryOptions(
         collapseIndexes,
         joinPrimitiveArrayValues,
         combineArraysOfObjects,
+        stabilizeOrderOfPropertiesInArraysOfObjects,
         proportionalSizeAdjustmentThreshold,
         cornerCellValue,
       } = config;
@@ -199,6 +209,7 @@ export function extractTableFactoryOptions(
         collapseIndexes,
         joinPrimitiveArrayValues,
         combineArraysOfObjects,
+        stabilizeOrderOfPropertiesInArraysOfObjects,
         proportionalSizeAdjustmentThreshold,
         cornerCellValue: cornerCellValue ?? "",
       };

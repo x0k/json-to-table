@@ -26,12 +26,14 @@ export interface TableFactoryOptions<V> {
   proportionalSizeAdjustmentThreshold?: number;
   collapseIndexes?: boolean;
   cornerCellValue: V;
+  stabilizeOrderOfPropertiesInArraysOfObjects?: boolean;
 }
 
 export function makeTableFactory({
   combineArraysOfObjects,
   joinPrimitiveArrayValues,
   proportionalSizeAdjustmentThreshold = 1,
+  stabilizeOrderOfPropertiesInArraysOfObjects = true,
   cornerCellValue,
   collapseIndexes,
 }: TableFactoryOptions<JSONPrimitiveOrNull>) {
@@ -168,15 +170,32 @@ export function makeTableFactory({
     if (Object.keys(value).length === 0) {
       return makeTableFromValue("");
     }
-    const isArray = Array.isArray(value);
-    if (isArray && joinPrimitiveArrayValues && value.every(isJsonPrimitiveOrNull)) {
-      return makeTableFromValue(value.join(", "));
-    }
-    if (isArray && combineArraysOfObjects && value.every(isRecord)) {
-      // Can be an empty object
-      return transformValue(Object.assign({}, ...value));
-    }
-    if (isArray) {
+    if (Array.isArray(value)) {
+      if (joinPrimitiveArrayValues && value.every(isJsonPrimitiveOrNull)) {
+        return makeTableFromValue(value.join(", "));
+      }
+      if (combineArraysOfObjects && value.every(isRecord)) {
+        // Can be an empty object
+        return transformValue(Object.assign({}, ...value));
+      }
+      if (
+        stabilizeOrderOfPropertiesInArraysOfObjects &&
+        value.every(isRecord)
+      ) {
+        let count = 0;
+        const order: Record<string, number> = {};
+        const array: JSONRecord[] = new Array(value.length);
+        for (let i = 0; i < value.length; i++) {
+          const obj = value[i] as JSONRecord;
+          const keys = Object.keys(obj);
+          const entries = new Array<[string, JSONValue]>(keys.length);
+          for (const key of keys) {
+            entries[(order[key] ??= count++)] = [key, obj[key]];
+          }
+          array[i] = Object.fromEntries(entries);
+        }
+        return transformArray(array);
+      }
       return transformArray(value);
     }
     return transformRecord(value);
