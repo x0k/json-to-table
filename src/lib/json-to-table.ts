@@ -1,5 +1,4 @@
 import {
-  JSONArray,
   JSONPrimitiveOrNull,
   JSONRecord,
   JSONValue,
@@ -17,6 +16,7 @@ import {
 } from "@/lib/json-table";
 import { isRecord } from "@/lib/guards";
 import { array } from "@/lib/array";
+import { makeObjectPropertiesStabilizer } from "@/lib/object";
 
 export interface TableFactoryOptions<V> {
   joinPrimitiveArrayValues?: boolean;
@@ -28,6 +28,8 @@ export interface TableFactoryOptions<V> {
   cornerCellValue: V;
   stabilizeOrderOfPropertiesInArraysOfObjects?: boolean;
 }
+
+const EMPTY = makeTableFromValue("");
 
 export function makeTableFactory({
   combineArraysOfObjects,
@@ -151,52 +153,69 @@ export function makeTableFactory({
     };
   }
 
-  function transformArray(value: JSONArray): Table {
-    const titles = array(value.length, (i) => String(i + 1));
-    const tables = value.map(transformValue);
+  function stackTablesVertical(titles: string[], tables: Table[]): Table {
     const stacked = verticalTableStacker(tables);
     return addIndexes(stacked, titles);
   }
-  function transformRecord(value: JSONRecord): Table {
-    const titles = Object.keys(value);
-    const tables = titles.map((key) => transformValue(value[key]));
+  function stackTablesHorizontal(titles: string[], tables: Table[]): Table {
     const stacked = horizontalTableStacker(tables);
     return addHeaders(stacked, titles);
+  }
+  function transformRecord(record: Record<string, JSONValue>): Table {
+    const keys = Object.keys(record);
+    if (keys.length === 0) {
+      return EMPTY;
+    }
+    return stackTablesHorizontal(
+      keys,
+      keys.map((key) => transformValue(record[key]))
+    );
+  }
+  function transformArray<V extends JSONValue>(
+    value: V[],
+    transformValue: (value: V) => Table
+  ): Table {
+    const titles = new Array<string>(value.length);
+    const tables = new Array<Table>(value.length);
+    for (let i = 0; i < value.length; i++) {
+      titles[i] = String(i + 1);
+      tables[i] = transformValue(value[i]);
+    }
+    return stackTablesVertical(titles, tables);
   }
   function transformValue(value: JSONValue): Table {
     if (isJsonPrimitiveOrNull(value)) {
       return makeTableFromValue(value);
     }
-    if (Object.keys(value).length === 0) {
-      return makeTableFromValue("");
-    }
     if (Array.isArray(value)) {
-      if (joinPrimitiveArrayValues && value.every(isJsonPrimitiveOrNull)) {
+      if (value.length === 0) {
+        return EMPTY;
+      }
+      let isPrimitives = true;
+      let isRecords = true;
+      let i = 0;
+      while (i < value.length && (isPrimitives || isRecord)) {
+        isPrimitives = isPrimitives && isJsonPrimitiveOrNull(value[i]);
+        isRecords = isRecords && isRecord(value[i]);
+        i++;
+      }
+      if (joinPrimitiveArrayValues && isPrimitives) {
         return makeTableFromValue(value.join(", "));
       }
-      if (combineArraysOfObjects && value.every(isRecord)) {
-        // Can be an empty object
-        return transformValue(Object.assign({}, ...value));
+      if (combineArraysOfObjects && isRecords) {
+        return transformRecord(Object.assign({}, ...value));
       }
       if (
         stabilizeOrderOfPropertiesInArraysOfObjects &&
         value.every(isRecord)
       ) {
-        let count = 0;
-        const order: Record<string, number> = {};
-        const array: JSONRecord[] = new Array(value.length);
-        for (let i = 0; i < value.length; i++) {
-          const obj = value[i] as JSONRecord;
-          const keys = Object.keys(obj);
-          const entries = new Array<[string, JSONValue]>(keys.length);
-          for (const key of keys) {
-            entries[(order[key] ??= count++)] = [key, obj[key]];
-          }
-          array[i] = Object.fromEntries(entries);
-        }
-        return transformArray(array);
+        const stabilize = makeObjectPropertiesStabilizer();
+        return transformArray(value as JSONRecord[], (value) => {
+          const [keys, values] = stabilize(value);
+          return stackTablesHorizontal(keys, values.map(transformValue));
+        });
       }
-      return transformArray(value);
+      return transformArray(value, transformValue);
     }
     return transformRecord(value);
   }
