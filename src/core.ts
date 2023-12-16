@@ -3,9 +3,9 @@ import { UiSchema } from "@rjsf/utils";
 import { JSONSchema } from "@/lib/json-schema";
 import { TableFactoryOptions } from "@/lib/json-to-table";
 import { JSONPrimitiveOrNull } from "@/lib/json";
-import { Block } from "./lib/json-table";
-import { createMatrix, fromMatrix } from "./lib/block-matrix";
-import { horizontalMirror, transpose, verticalMirror } from "./lib/matrix";
+import { Block } from "@/lib/json-table";
+import { createMatrix, fromMatrix } from "@/lib/block-matrix";
+import { horizontalMirror, transpose, verticalMirror } from "@/lib/matrix";
 
 export enum TransformPreset {
   Default = "Default",
@@ -47,6 +47,12 @@ export const TRANSFORM_SCHEMA: JSONSchema = {
       type: "boolean",
       default: false,
     },
+    createOnOpen: {
+      type: "boolean",
+      title: "Create on open",
+      description: "Creating a table when opening a share link",
+      default: true
+    }
   },
   required: ["preset", "format"],
   dependencies: {
@@ -161,12 +167,14 @@ export const TRANSFORMED_UI_SCHEMA: UiSchema = {
     "transpose",
     "format",
     "paginate",
+    "createOnOpen"
   ],
 };
 
 export type TransformConfig = {
   format: OutputFormat;
   paginate: boolean;
+  createOnOpen: boolean;
 } & (
   | { preset: TransformPreset.Default }
   | ({
