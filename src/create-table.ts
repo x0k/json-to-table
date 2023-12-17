@@ -2,10 +2,7 @@ import { blockToASCII } from "@/lib/block-to-ascii";
 import { HTML_TABLE_STYLES, makeHTMLPageContent } from "@/lib/block-to-html";
 import { makeWorkBook } from "@/lib/block-to-xlsx";
 import { Entry, transformValue } from "@/lib/entry";
-import {
-  createFileURL,
-  createXLSBlob,
-} from "@/lib/file";
+import { createFileURL, createXLSBlob } from "@/lib/file";
 import { escapeHtml, renderHTMLPage } from "@/lib/html";
 import {
   JSONPrimitiveOrNull,
@@ -58,7 +55,7 @@ export async function createTable(
     .map(transformValue(tableTransformer))
     .map(transformValue(bakeTable))
     .map(transformValue(transformApplicator));
-  switch (transformConfig.format as OutputFormat) {
+  switch (transformConfig.format) {
     case OutputFormat.HTML: {
       return renderHTMLPage(
         "Table",
@@ -68,7 +65,9 @@ export async function createTable(
     }
     case OutputFormat.ASCII: {
       const renderTable = (t: Block) =>
-        `<pre><code>${escapeHtml(blockToASCII(t))}</code></pre>`;
+        `<pre><code>${escapeHtml(
+          blockToASCII(t, { format: transformConfig.asciiFormat })
+        )}</code></pre>`;
       return renderHTMLPage(
         "Table",
         pagesTables.length > 1
@@ -94,7 +93,7 @@ export async function createTable(
       })
         .xlsx.writeBuffer()
         .then(createXLSBlob)
-        .then(createFileURL)
+        .then(createFileURL);
     default:
       throw new Error(`Unexpected output format`);
   }

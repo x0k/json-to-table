@@ -6,6 +6,7 @@ import { JSONPrimitiveOrNull } from "@/lib/json";
 import { Block } from "@/lib/json-table";
 import { createMatrix, fromMatrix } from "@/lib/block-matrix";
 import { horizontalMirror, transpose, verticalMirror } from "@/lib/matrix";
+import { ASCIITableFormat, ASCII_TABLE_FORMATS } from "@/lib/block-to-ascii";
 
 export enum TransformPreset {
   Default = "Default",
@@ -51,8 +52,8 @@ export const TRANSFORM_SCHEMA: JSONSchema = {
       type: "boolean",
       title: "Create on open",
       description: "Creating a table when opening a share link",
-      default: true
-    }
+      default: true,
+    },
   },
   required: ["preset", "format"],
   dependencies: {
@@ -149,6 +150,37 @@ export const TRANSFORM_SCHEMA: JSONSchema = {
         },
       ],
     },
+    format: {
+      oneOf: [
+        {
+          properties: {
+            format: {
+              const: OutputFormat.HTML,
+            },
+          },
+        },
+        {
+          properties: {
+            format: {
+              const: OutputFormat.XLSX,
+            },
+          },
+        },
+        {
+          properties: {
+            format: {
+              const: OutputFormat.ASCII,
+            },
+            asciiFormat: {
+              type: "string",
+              title: "ASCII table format",
+              enum: ASCII_TABLE_FORMATS,
+              default: ASCIITableFormat.MySQL,
+            },
+          },
+        },
+      ],
+    },
   },
 };
 
@@ -166,21 +198,33 @@ export const TRANSFORMED_UI_SCHEMA: UiSchema = {
     "verticalReflect",
     "transpose",
     "format",
+    "asciiFormat",
     "paginate",
-    "createOnOpen"
+    "createOnOpen",
   ],
 };
 
 export type TransformConfig = {
-  format: OutputFormat;
   paginate: boolean;
   createOnOpen: boolean;
 } & (
-  | { preset: TransformPreset.Default }
-  | ({
-      preset: TransformPreset.Manual;
-    } & TableFactoryOptions<JSONPrimitiveOrNull>)
+  | {
+      format: OutputFormat.ASCII;
+      asciiFormat: ASCIITableFormat;
+    }
+  | {
+      format: OutputFormat.HTML;
+    }
+  | {
+      format: OutputFormat.XLSX;
+    }
 ) &
+  (
+    | { preset: TransformPreset.Default }
+    | ({
+        preset: TransformPreset.Manual;
+      } & TableFactoryOptions<JSONPrimitiveOrNull>)
+  ) &
   (
     | { transform: false }
     | {

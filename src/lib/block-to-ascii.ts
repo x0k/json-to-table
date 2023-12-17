@@ -1,6 +1,6 @@
 import { Block, Cell, CellType } from "@/lib/json-table";
 import { array } from "@/lib/array";
-import { matrix } from "@/lib/matrix";
+import { Matrix, matrix } from "@/lib/matrix";
 import { createMatrix } from "@/lib/block-matrix";
 
 function getMaxLineLength(rows: string[]) {
@@ -28,25 +28,31 @@ function padCellRow(row: string, w: number, cell: Cell, rows: string[]) {
   }
 }
 
-// TODO: get rid of matrix thing since heres is a column property
-export function blockToASCII(block: Block) {
-  const xShift = array(block.width + 1, () => 0);
-  const yShift = array(block.height + 1, () => 0);
-  const inputMatrix = createMatrix(block, (cell, rowIndex, collIndex) => {
-    const content =
-      typeof cell.value === "string"
-        ? cell.value
-        : JSON.stringify(cell.value, null, 2);
-    const rows = content.split("\n").map((r) => ` ${r.trim()} `);
-    return {
-      cell,
-      rowIndex,
-      collIndex,
-      rows,
-      maxRowLength: getMaxLineLength(rows),
-    };
-  });
-  xShift[0] = yShift[0] = 1;
+export enum ASCIITableFormat {
+  MySQL = "MySql",
+  MarkdownLike = "Markdown Like",
+}
+
+export const ASCII_TABLE_FORMATS = Object.values(ASCIITableFormat);
+
+export interface BlockToASCIIOptions {
+  format?: ASCIITableFormat;
+}
+
+interface InputCell {
+  cell: Cell;
+  rowIndex: number;
+  collIndex: number;
+  lines: string[];
+  maxRowLength: number;
+}
+
+function populateShifts(
+  block: Block,
+  inputMatrix: Matrix<InputCell>,
+  xShift: number[],
+  yShift: number[]
+) {
   for (let i = 0; i < block.height; i++) {
     for (let j = 0; j < block.width; j++) {
       const cell = inputMatrix[i][j];
@@ -59,51 +65,41 @@ export function blockToASCII(block: Block) {
       if (cell.rowIndex === i) {
         yShift[i + 1] = Math.max(
           yShift[i + 1],
-          Math.max(cell.rows.length - cell.cell.height, 0) + 1
+          Math.max(cell.lines.length - cell.cell.height, 0) + 1
         );
       }
     }
   }
-  // Accumulate
-  for (let i = 1; i <= block.width; i++) {
-    xShift[i] += xShift[i - 1];
+}
+
+function populateMySqlShifts(
+  block: Block,
+  inputMatrix: Matrix<InputCell>,
+  xShift: number[],
+  yShift: number[]
+) {
+  xShift[0] = yShift[0] = 1;
+  populateShifts(block, inputMatrix, xShift, yShift);
+}
+
+function populateMarkdownLikeShifts(
+  block: Block,
+  inputMatrix: Matrix<InputCell>,
+  xShift: number[],
+  yShift: number[]
+) {
+  xShift[0] = 1;
+  populateShifts(block, inputMatrix, xShift, yShift);
+  for (let i = 2; i < inputMatrix.length; i++) {
+    yShift[i] -= 1;
   }
-  for (let i = 1; i <= block.height; i++) {
-    yShift[i] += yShift[i - 1];
-  }
-  const height = block.height + yShift[block.height];
-  const width = block.width + xShift[block.width];
-  const outMatrix = matrix<string | null>(height, width, () => null);
-  const placed = new Set<Cell>();
-  for (let i = 0; i < block.height; i++) {
-    for (let j = 0; j < block.width; j++) {
-      const { cell, rows } = inputMatrix[i][j];
-      if (placed.has(cell)) {
-        continue;
-      }
-      placed.add(cell);
-      const rowIndex = i + yShift[i];
-      const colIndex = j + xShift[j];
-      const h = cell.height + yShift[i + cell.height] - yShift[i] - 1;
-      const w = cell.width + xShift[j + cell.width] - xShift[j] - 1;
-      const startRow = Math.floor((h - rows.length) / 2);
-      const endRow = startRow + rows.length;
-      for (let y = 0; y < h; y++) {
-        const c = y + rowIndex;
-        if (y >= startRow && y < endRow) {
-          const row = padCellRow(rows[y - startRow], w, cell, rows);
-          for (let x = 0; x < w; x++) {
-            outMatrix[c][x + colIndex] = row[x];
-          }
-        } else {
-          for (let x = 0; x < w; x++) {
-            outMatrix[c][x + colIndex] = " ";
-          }
-        }
-      }
-    }
-  }
-  // Draw border
+}
+
+function drawMySqlBorder(
+  outMatrix: Matrix<string | null>,
+  width: number,
+  height: number
+) {
   for (let i = 0; i < height; i++) {
     for (let j = 0; j < width; j++) {
       const cell = outMatrix[i][j];
@@ -138,5 +134,112 @@ export function blockToASCII(block: Block) {
       outMatrix[i][j] = "n";
     }
   }
+}
+
+function drawMarkdownLikeBorder(
+  outMatrix: Matrix<string | null>,
+  width: number,
+  height: number
+) {
+  outMatrix.splice(height - 1, 1);
+  for (let i = 0; i < height - 1; i++) {
+    for (let j = 0; j < width; j++) {
+      const cell = outMatrix[i][j];
+      if (cell !== null) {
+        continue;
+      }
+      const isLeftEdge = j === 0;
+      const isTopEdge = i === 0;
+      // const isRightEdge = j === width - 1;
+      // const isBottomEdge = i === height - 1;
+      const previous = !isLeftEdge && outMatrix[i][j - 1];
+      const above = !isTopEdge && outMatrix[i - 1][j];
+      // const next = !isRightEdge && outMatrix[i][j + 1];
+      // const beneath = !isBottomEdge && outMatrix[i + 1][j];
+      if ((previous === "|" || previous === "-") && above !== "|") {
+        outMatrix[i][j] = "-";
+        continue;
+      }
+      outMatrix[i][j] = "|";
+    }
+  }
+}
+
+const SHIFTS_POPULATORS = {
+  [ASCIITableFormat.MySQL]: populateMySqlShifts,
+  [ASCIITableFormat.MarkdownLike]: populateMarkdownLikeShifts,
+};
+
+const BORDER_DRAWERS = {
+  [ASCIITableFormat.MySQL]: drawMySqlBorder,
+  [ASCIITableFormat.MarkdownLike]: drawMarkdownLikeBorder,
+};
+
+export function blockToASCII(
+  block: Block,
+  { format = ASCIITableFormat.MySQL }: BlockToASCIIOptions = {}
+) {
+  const inputMatrix = createMatrix(
+    block,
+    (cell, rowIndex, collIndex): InputCell => {
+      const content =
+        typeof cell.value === "string"
+          ? cell.value
+          : JSON.stringify(cell.value, null, 2);
+      const lines = content.split("\n").map((r) => ` ${r.trim()} `);
+      return {
+        cell,
+        rowIndex,
+        collIndex,
+        lines,
+        maxRowLength: getMaxLineLength(lines),
+      };
+    }
+  );
+  const xShift = array(block.width + 1, () => 0);
+  const yShift = array(block.height + 1, () => 0);
+  SHIFTS_POPULATORS[format](block, inputMatrix, xShift, yShift);
+  // Accumulate
+  for (let i = 1; i <= block.width; i++) {
+    xShift[i] += xShift[i - 1];
+  }
+  for (let i = 1; i <= block.height; i++) {
+    yShift[i] += yShift[i - 1];
+  }
+  const height = block.height + yShift[block.height];
+  const width = block.width + xShift[block.width];
+  const outMatrix = matrix<string | null>(height, width, () => null);
+  const placed = new Set<Cell>();
+  for (let i = 0; i < block.height; i++) {
+    for (let j = 0; j < block.width; j++) {
+      const { cell, lines } = inputMatrix[i][j];
+      if (placed.has(cell)) {
+        continue;
+      }
+      placed.add(cell);
+      const rowIndex = i + yShift[i];
+      const colIndex = j + xShift[j];
+      // TODO: This `||` is a hack and the `splice` in the markdown-like border fn also
+      //       I think there is a general way to compute sizes
+      const h = cell.height + yShift[i + cell.height] - yShift[i] - 1 || 1;
+      const w = cell.width + xShift[j + cell.width] - xShift[j] - 1 || 1;
+      const startRow = Math.floor((h - lines.length) / 2);
+      const endRow = startRow + lines.length;
+      for (let y = 0; y < h; y++) {
+        const c = y + rowIndex;
+        if (y >= startRow && y < endRow) {
+          const row = padCellRow(lines[y - startRow], w, cell, lines);
+          for (let x = 0; x < w; x++) {
+            outMatrix[c][x + colIndex] = row[x];
+          }
+        } else {
+          for (let x = 0; x < w; x++) {
+            outMatrix[c][x + colIndex] = " ";
+          }
+        }
+      }
+    }
+  }
+  BORDER_DRAWERS[format](outMatrix, width, height);
   return outMatrix.map((row) => row.join("")).join("\n");
 }
