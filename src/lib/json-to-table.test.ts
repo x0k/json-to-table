@@ -13,8 +13,8 @@ describe("makeTableFactory", () => {
   const factory = makeTableFactory({ cornerCellValue });
   const bake = makeTableBaker<JSONPrimitiveOrNull>({
     cornerCellValue,
-    bakeHead: true,
-    bakeIndexes: true,
+    head: true,
+    indexes: true,
   });
 
   it("Should create table for primitives", () => {

@@ -42,8 +42,8 @@ export async function createTable(
   const transformApplicator = makeTransformApplicator(transformConfig);
   const bakeTable = makeTableBaker<JSONPrimitiveOrNull>({
     cornerCellValue: options.cornerCellValue,
-    bakeHead: true,
-    bakeIndexes: true,
+    head: true,
+    indexes: true,
   });
   const tableData = parseTableData(data);
   const pagesData: Entry<JSONValue>[] =

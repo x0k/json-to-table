@@ -12,22 +12,19 @@ import {
   Table,
   TableComponent,
   TableCompositor,
-  BlockTransform,
-  BlockSizeAspect,
   ComposedTable,
 } from "./core";
-import { mergeRows, prependCell, rebaseColumns, shiftRows } from "./row";
+import { concatRows, rowPrepend, shiftColumns, shiftRows } from "./row";
 import {
   areProportionalBlocksEqual,
-  makeBlockHeightScaler,
-  makeBlockWidthScaler,
+  makeBlockScaler,
   makeHorizontalBlockStacker,
   makeVerticalBlockStacker,
 } from "./block";
 
 export interface BakeOptions<V> {
-  bakeHead?: boolean;
-  bakeIndexes?: boolean;
+  head?: boolean;
+  indexes?: boolean;
   cornerCellValue: V;
 }
 
@@ -71,8 +68,8 @@ export function tryDeduplicateComponent<V>(
 }
 
 export function makeTableBaker<V>({
-  bakeHead,
-  bakeIndexes,
+  head: bakeHead,
+  indexes: bakeIndexes,
   cornerCellValue,
 }: BakeOptions<V>) {
   return ({ body, head, indexes }: Table<V>) => {
@@ -83,7 +80,7 @@ export function makeTableBaker<V>({
     const useIndexes = bakeIndexes && indexes !== null;
     const withIndexesRows = useIndexes
       ? indexes.rows.map((row, i) =>
-          mergeRows(row, indexes.width, body.rows[i])
+          concatRows(row, indexes.width, body.rows[i])
         )
       : body.rows;
     const width = body.width + (useIndexes ? indexes.width : 0);
@@ -104,7 +101,7 @@ export function makeTableBaker<V>({
     }
     const firstHeadRow = head.rows[0];
     const rows: Row<V>[] = [
-      prependCell(firstHeadRow, {
+      rowPrepend(firstHeadRow, {
         height: head.height,
         width: indexes.width,
         value: cornerCellValue,
@@ -184,7 +181,7 @@ export function tryStackTableComponent<V>(
               ],
               columns: [
                 0,
-                ...rebaseColumns(cmp.rows[0].columns, opposite.width),
+                ...shiftColumns(cmp.rows[0].columns, opposite.width),
               ],
             },
             ...cmp.rows.slice(1),
@@ -192,7 +189,7 @@ export function tryStackTableComponent<V>(
         });
         break;
       default:
-        throw new Error();
+        throw new Error(`Unknown table component: ${component}`);
     }
   }
   return compose(blocks);
@@ -203,22 +200,6 @@ export interface TableStackerOptions<C extends TableComponent, V> {
   cornerCellValue: V;
   deduplicationComponent: C;
 }
-
-const TABLE_COMPONENT_TO_BAKE_OPTIONS: Record<
-  TableComponent,
-  "bakeHead" | "bakeIndexes"
-> = {
-  head: "bakeHead",
-  indexes: "bakeIndexes",
-};
-
-const SIZE_ASPECT_SCALE_FACTORIES: Record<
-  BlockSizeAspect,
-  <V>(value: number) => BlockTransform<V>
-> = {
-  width: makeBlockWidthScaler,
-  height: makeBlockHeightScaler,
-};
 
 const TABLE_COMPONENT_TO_BLOCK_STACKERS: Record<
   TableComponent,
@@ -237,8 +218,8 @@ export function makeTableStacker<C extends TableComponent, V>({
     TABLE_COMPONENT_TO_BLOCK_STACKERS[deduplicationComponent]<V>(
       isProportionalResize
     );
+  const opposite = TABLE_COMPONENT_OPPOSITES[deduplicationComponent];
   return (tables) => {
-    const opposite = TABLE_COMPONENT_OPPOSITES[deduplicationComponent];
     const deduplicated = tryDeduplicateComponent(
       tables,
       deduplicationComponent,
@@ -254,22 +235,20 @@ export function makeTableStacker<C extends TableComponent, V>({
     );
     const baked = tables.map(
       makeTableBaker({
-        [TABLE_COMPONENT_TO_BAKE_OPTIONS[deduplicationComponent]]: bake,
-        [TABLE_COMPONENT_TO_BAKE_OPTIONS[opposite]]: stacked === null,
+        [deduplicationComponent]: bake,
+        [opposite]: stacked === null,
         cornerCellValue,
       })
     );
     const body = blockStacker(baked);
     const aspect = TABLE_COMPONENT_SIZE_ASPECTS[opposite];
     const scaled =
-      deduplicated &&
-      SIZE_ASPECT_SCALE_FACTORIES[aspect]<V>(body[aspect])(deduplicated);
-    // @ts-expect-error too dynamic
+      deduplicated && makeBlockScaler<V>(aspect, body[aspect])(deduplicated);
     const composedTable: ComposedTable<V> = {
       body,
       baked,
-      [deduplicationComponent]: scaled,
-      [opposite]: stacked,
+      [deduplicationComponent as "head"]: scaled,
+      [opposite as "indexes"]: stacked,
     };
     return composedTable;
   };

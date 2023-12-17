@@ -2,7 +2,7 @@ import { Block, CellType } from "./core";
 import {
   stretchCellsToBottom,
   stretchCellsToRight,
-  makeBlockHeightScaler,
+  makeBlockScaler,
   areProportionalBlocksEqual,
 } from "./block";
 
@@ -189,9 +189,9 @@ describe("stretchCellsToRight", () => {
   });
 });
 
-describe("makeBlockHeightScaler", () => {
-  it("Should scale correctly and fill empty cells", () => {
-    const scale = makeBlockHeightScaler(5);
+describe("makeBlockScaler", () => {
+  it("Should scale correctly height and fill empty cells", () => {
+    const scale = makeBlockScaler("height", 5);
     const data: Block = {
       height: 2,
       width: 2,

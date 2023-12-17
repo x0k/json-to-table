@@ -43,6 +43,12 @@ export type ProportionalResizeGuard = (
   maxValue: number
 ) => boolean;
 
+export type RowsScaler<V> = (
+  rows: Row<V>[],
+  multiplier: number,
+  finalSize: number
+) => Row<V>[];
+
 export type BlockTransform<V> = (block: Block<V>) => Block<V>;
 
 export type BlockCompositor<V> = (blocks: Block<V>[]) => Block<V>;
@@ -55,6 +61,14 @@ export type TableCompositor<V> = (tables: Table<V>[]) => ComposedTable<V>;
 
 export type TableComponent = "head" | "indexes";
 export type BlockSizeAspect = "height" | "width";
+
+export const BLOCK_SIZE_ASPECT_OPPOSITES: Record<
+  BlockSizeAspect,
+  BlockSizeAspect
+> = {
+  height: "width",
+  width: "height",
+};
 
 export const TABLE_COMPONENT_SIZE_ASPECTS: Record<
   TableComponent,

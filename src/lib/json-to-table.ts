@@ -11,7 +11,7 @@ import {
   makeProportionalResizeGuard,
   ComposedTable,
   CellType,
-  rebaseColumns,
+  shiftColumns,
   makeTableStacker,
 } from "@/lib/json-table";
 import { isRecord } from "@/lib/guards";
@@ -96,14 +96,14 @@ export function makeTableFactory({
             },
             ...indexesRows[h].cells,
           ],
-          columns: [0, ...rebaseColumns(indexesRows[h].columns, 1)],
+          columns: [0, ...shiftColumns(indexesRows[h].columns, 1)],
         };
         if (hasIndexes) {
           for (let j = 1; j < height; j++) {
             const hj = h + j;
             indexesRows[hj] = {
               cells: indexesRows[hj].cells,
-              columns: rebaseColumns(indexesRows[hj].columns, 1),
+              columns: shiftColumns(indexesRows[hj].columns, 1),
             };
           }
         }
