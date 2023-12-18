@@ -7,6 +7,7 @@ import { Block } from "@/lib/json-table";
 import { createMatrix, fromMatrix } from "@/lib/block-matrix";
 import { horizontalMirror, transpose, verticalMirror } from "@/lib/matrix";
 import { ASCIITableFormat, ASCII_TABLE_FORMATS } from "@/lib/block-to-ascii";
+import { Request } from "@/lib/actor";
 
 export enum TransformPreset {
   Default = "Default",
@@ -294,4 +295,32 @@ export function makeTransformApplicator(config: TransformConfig) {
       ({ value }) => value
     );
   };
+}
+
+export const APP_WORKER_ID = "app-worker";
+
+export enum WorkerActionType {
+  Hello = "hello",
+  CreateTable = "create-table",
+}
+
+export interface AbstractWorkerAction<T extends WorkerActionType>
+  extends Request<T> {}
+
+export interface HelloWorkerAction
+  extends AbstractWorkerAction<WorkerActionType.Hello> {
+  message: string;
+}
+
+export interface CreateTableWorkerAction
+  extends AbstractWorkerAction<WorkerActionType.CreateTable> {
+  data: string;
+  transformConfig: TransformConfig;
+}
+
+export type WorkerAction = HelloWorkerAction | CreateTableWorkerAction;
+
+export interface WorkerActionResult {
+  [WorkerActionType.Hello]: string;
+  [WorkerActionType.CreateTable]: string;
 }

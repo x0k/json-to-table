@@ -1,26 +1,22 @@
 import React, { useCallback, useState } from "react";
-import {
-  Stack,
-  Textarea,
-  Button,
-  Link,
-  useToast,
-} from "@chakra-ui/react";
+import { Stack, Textarea, Button, Link, useToast } from "@chakra-ui/react";
 import { Form } from "@rjsf/chakra-ui";
 import validator from "@rjsf/validator-ajv8";
 
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 import { makeDownloadFileByUrl } from "@/lib/file";
 import { createPage } from "@/lib/browser";
+import { MessageType } from "@/lib/actor";
 
 import {
   TransformConfig,
   TRANSFORMED_UI_SCHEMA,
   TRANSFORM_SCHEMA,
   OutputFormat,
+  APP_WORKER_ID,
+  WorkerActionType,
 } from "./core";
-import { compressor } from "./init";
-import { createTable } from "./create-table";
+import { appWorker, compressor } from "./init";
 import { Layout } from "./layout";
 
 function useChangeHandler(handler: (value: string) => void) {
@@ -39,7 +35,7 @@ function sample(name: string, setData: (data: string) => void) {
 
 const stringifyData = (data: string) => data && compressor.compress(data);
 const stringifyOptions = (options: TransformConfig) =>
-  compressor.compress(JSON.stringify(options))
+  compressor.compress(JSON.stringify(options));
 
 export interface AppProps {
   initialData: string;
@@ -121,15 +117,33 @@ export function App({ initialData, initialOptions }: AppProps) {
         formData={transformData}
         onChange={({ formData }) => setTransformData(formData)}
         onSubmit={({ formData }) =>
-          createTable(data, formData).then((content) => {
-            switch (formData.format) {
-              case OutputFormat.XLSX:
-                makeDownloadFileByUrl("table.xlsx")(content);
-                return;
-              default:
-                createPage(content);
-            }
-          })
+          appWorker
+            .call({
+              id: Date.now().toString(16),
+              handlerId: APP_WORKER_ID,
+              type: MessageType.Request,
+              request: {
+                type: WorkerActionType.CreateTable,
+                data,
+                transformConfig: formData,
+              },
+            })
+            .then((content) => {
+              switch (formData.format) {
+                case OutputFormat.XLSX:
+                  makeDownloadFileByUrl("table.xlsx")(content);
+                  return;
+                default:
+                  createPage(content);
+              }
+            })
+            .catch((e) => {
+              toast({
+                title: "Error",
+                description: e,
+                status: "error",
+              });
+            })
         }
       >
         <Button w="100%" type="submit" colorScheme="teal">
