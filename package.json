@@ -18,22 +18,19 @@
     "@rjsf/utils": "^5.15.1",
     "@rjsf/validator-ajv8": "^5.15.1",
     "@types/json-schema": "^7.0.15",
-    "@types/json-schema-merge-allof": "^0.6.5",
-    "date-fns": "^2.30.0",
     "exceljs": "^4.4.0",
     "framer-motion": "^10.16.16",
     "json-schema": "^0.4.0",
-    "json-schema-merge-allof": "^0.8.1",
     "lz-string": "^1.5.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "@types/jest": "^29.5.11",
-    "@types/react": "^18.2.43",
-    "@types/react-dom": "^18.2.17",
+    "@types/react": "^18.2.45",
+    "@types/react-dom": "^18.2.18",
     "@vitejs/plugin-react-swc": "^3.5.0",
     "typescript": "^5.3.3",
-    "vite": "^5.0.8"
+    "vite": "^5.0.10"
   }
 }
