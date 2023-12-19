@@ -6,18 +6,11 @@ import validator from "@rjsf/validator-ajv8";
 import { copyTextToClipboard } from "@/lib/copy-to-clipboard";
 import { makeDownloadFileByUrl } from "@/lib/file";
 import { createPage } from "@/lib/browser";
-import { MessageType } from "@/lib/actor";
 
-import {
-  TransformConfig,
-  TRANSFORMED_UI_SCHEMA,
-  TRANSFORM_SCHEMA,
-  OutputFormat,
-  APP_WORKER_ID,
-  WorkerActionType,
-} from "./core";
-import { appWorker, compressor } from "./init";
+import { TRANSFORMED_UI_SCHEMA, TRANSFORM_SCHEMA } from "./core";
 import { Layout } from "./layout";
+import { TransformConfig, OutputFormat } from "./app-worker";
+import { appWorker, compressor } from "./init";
 
 function useChangeHandler(handler: (value: string) => void) {
   return useCallback(
@@ -118,16 +111,7 @@ export function App({ initialData, initialOptions }: AppProps) {
         onChange={({ formData }) => setTransformData(formData)}
         onSubmit={({ formData }) =>
           appWorker
-            .call({
-              id: Date.now().toString(16),
-              handlerId: APP_WORKER_ID,
-              type: MessageType.Request,
-              request: {
-                type: WorkerActionType.CreateTable,
-                data,
-                transformConfig: formData,
-              },
-            })
+            .createTable(data, formData)
             .then((content) => {
               switch (formData.format) {
                 case OutputFormat.XLSX:

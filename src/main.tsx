@@ -2,12 +2,11 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { ChakraProvider } from "@chakra-ui/react";
 
-import { OutputFormat, TransformConfig, TransformPreset } from "./core";
-import { compressor } from "./init";
+import { OutputFormat, TransformConfig, TransformPreset } from "./app-worker";
 import { App } from "./app";
-import { createTable } from "./create-table";
 import { HTMLTablePage } from "./html-table-page";
 import { DownloadTablePage } from "./download-page";
+import { compressor, appWorker } from "./init";
 
 function page() {
   let initialData = "";
@@ -37,7 +36,7 @@ function page() {
     }
   }
   if (searchParams.get("createOnOpen") === "true") {
-    const table = createTable(initialData, initialOptions);
+    const table = appWorker.createTable(initialData, initialOptions);
     switch (initialOptions.format) {
       case OutputFormat.XLSX:
         return <DownloadTablePage title="table.xlsx" content={table} />;
