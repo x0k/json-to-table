@@ -5,6 +5,58 @@ import { ASCIITableFormat, ASCII_TABLE_FORMATS } from "@/lib/block-to-ascii";
 
 import { OutputFormat, TransformPreset } from "./app-worker";
 
+export enum SourceType {
+  Text = "text",
+  File = "file",
+  URL = "url",
+}
+
+export type Source = {
+  data: string;
+} & (
+  | {
+      type: SourceType.Text;
+    }
+  | {
+      type: SourceType.File;
+      fileName: string;
+    }
+  | {
+      type: SourceType.URL;
+    }
+);
+
+export function makeSource(type: SourceType): Source {
+  switch (type) {
+    case SourceType.File:
+      return {
+        type,
+        data: "",
+        fileName: "",
+      };
+    default:
+      return {
+        type,
+        data: "",
+      };
+  }
+}
+
+export function fetchAsText(url: string): Promise<string> {
+  return fetch(url).then((r) => r.text());
+}
+
+export async function resolveSource(source: Source): Promise<string> {
+  switch (source.type) {
+    case SourceType.Text:
+      return source.data;
+    case SourceType.File:
+      return source.data;
+    case SourceType.URL:
+      return await fetchAsText(source.data);
+  }
+}
+
 export const TRANSFORM_SCHEMA: JSONSchema = {
   type: "object",
   title: "Options",
