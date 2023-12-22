@@ -7,6 +7,7 @@ import simpleHeadersDuplication from "./__fixtures__/simple-headers-duplication.
 import simpleIndexesDeduplication from "./__fixtures__/simple-indexes-deduplication.json";
 import parsingError from "./__fixtures__/parsing-error.json";
 import differentHeaders from "./__fixtures__/different-headers.json";
+import uniqueHeaders from "./__fixtures__/uniq-headers.json";
 
 describe("makeTableFactory", () => {
   const cornerCellValue = "№";
@@ -152,6 +153,22 @@ describe("makeTableFactory", () => {
 | 2 +---------------------+----------------+-------------+
 |   | 5428010618020694593 |            101 |           4 |
 +---+---------------------+----------------+-------------+
+`)
+  })
+
+  it('Should work with unique headers', () => {
+    const table = factory(uniqueHeaders as any);
+    const ascii = blockToASCII(bake(table));
+    expect(`\n${ascii}\n`).toBe(`
++---+-----------------------------+------+------+----------+--------+-------------+
+|   |         description         |  in  | name | required |  type  | uniqueItems |
+| 1 +-----------------------------+------+------+----------+--------+-------------+
+|   | name of the ComponentStatus | path | name | true     | string | true        |
++---+-----------------------------+------+------+----------+--------+-------------+
+|   |                                    $ref                                     |
+| 2 +-----------------------------------------------------------------------------+
+|   | #/parameters/pretty-tJGM1-ng                                                |
++---+-----------------------------------------------------------------------------+
 `)
   })
 });

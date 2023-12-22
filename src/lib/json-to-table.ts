@@ -207,7 +207,7 @@ export function makeTableFactory({
       }
       if (
         stabilizeOrderOfPropertiesInArraysOfObjects &&
-        value.every(isRecord)
+        isRecords
       ) {
         const stabilize = makeObjectPropertiesStabilizer();
         return transformArray(value as JSONRecord[], (value) => {
