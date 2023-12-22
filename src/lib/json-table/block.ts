@@ -89,6 +89,7 @@ function applyResize<V>(
 }
 
 export function stretchCellsToBottom<V>({ height, rows, width }: Block<V>) {
+  // TODO: Calculate yShift by row index and cell height
   const yShift = array(width, () => 0);
   const bottomPositions = new Array<
     | {
@@ -162,6 +163,7 @@ export function stretchCellsToRight<V>({ height, rows, width }: Block<V>) {
       }
     }
   }
+  // TODO: this algorithm can be implemented without `set` of cells
   const addedToResize = new Set<Cell<V>>();
   const toResize = new Map<number, Map<number, number>>();
   for (let i = 0; i < height; i++) {
