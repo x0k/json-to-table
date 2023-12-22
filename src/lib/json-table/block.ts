@@ -135,27 +135,42 @@ export function stretchCellsToBottom<V>({ height, rows, width }: Block<V>) {
 
 export function stretchCellsToRight<V>({ height, rows, width }: Block<V>) {
   const rightPositions = new Array<
-    { cell: Cell<V>; columnIndex: number; indexInRow: number } | undefined
+    | {
+        cell: Cell<V>;
+        indexInRow: number;
+        xTopRightCorner: number;
+      }
+    | undefined
   >(height);
   for (let i = 0; i < rows.length; i++) {
     const { cells, columns } = rows[i];
-    if (!cells.length) {
+    if (cells.length === 0) {
       continue;
     }
-    const index = cells.length - 1;
-    rightPositions[i] = {
-      cell: cells[index],
-      columnIndex: columns[index],
-      indexInRow: index,
+    const indexInRow = cells.length - 1;
+    const cell = cells[indexInRow];
+    const xTopRightCorner = columns[indexInRow] + cell.width;
+    const point = {
+      cell,
+      indexInRow,
+      xTopRightCorner,
     };
+    for (let j = i; j < i + cell.height; j++) {
+      const rp = rightPositions[j];
+      if (!rp || xTopRightCorner > rp.xTopRightCorner) {
+        rightPositions[j] = point;
+      }
+    }
   }
+  const addedToResize = new Set<Cell<V>>();
   const toResize = new Map<number, Map<number, number>>();
   for (let i = 0; i < height; i++) {
     const position = rightPositions[i];
-    if (!position) {
+    if (!position || addedToResize.has(position.cell)) {
       continue;
     }
-    const diff = width - position.columnIndex - position.cell.width;
+    addedToResize.add(position.cell);
+    const diff = width - position.xTopRightCorner;
     if (diff <= 0) {
       continue;
     }

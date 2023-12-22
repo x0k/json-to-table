@@ -8,6 +8,7 @@ import simpleIndexesDeduplication from "./__fixtures__/simple-indexes-deduplicat
 import parsingError from "./__fixtures__/parsing-error.json";
 import differentHeaders from "./__fixtures__/different-headers.json";
 import uniqueHeaders from "./__fixtures__/uniq-headers.json";
+import wrongSizes from "./__fixtures__/wrong-sizes.json";
 
 describe("makeTableFactory", () => {
   const cornerCellValue = "№";
@@ -140,7 +141,7 @@ describe("makeTableFactory", () => {
 `);
   });
 
-  it('Should not deduplicate objects with different headers', () => {
+  it("Should not deduplicate objects with different headers", () => {
     const table = factory(differentHeaders as any);
     const ascii = blockToASCII(bake(table));
     expect(`\n${ascii}\n`).toBe(`
@@ -153,10 +154,10 @@ describe("makeTableFactory", () => {
 | 2 +---------------------+----------------+-------------+
 |   | 5428010618020694593 |            101 |           4 |
 +---+---------------------+----------------+-------------+
-`)
-  })
+`);
+  });
 
-  it('Should work with unique headers', () => {
+  it("Should work with unique headers", () => {
     const table = factory(uniqueHeaders as any);
     const ascii = blockToASCII(bake(table));
     expect(`\n${ascii}\n`).toBe(`
@@ -169,6 +170,38 @@ describe("makeTableFactory", () => {
 | 2 +-----------------------------------------------------------------------------+
 |   | #/parameters/pretty-tJGM1-ng                                                |
 +---+-----------------------------------------------------------------------------+
-`)
-  })
+`);
+  });
+
+  it("Should create correct table", () => {
+    const table = factory(wrongSizes as any);
+    const ascii = blockToASCII(bake(table));
+    expect(`\n${ascii}\n`).toBe(`
++---+---------------+---------------+-----------------------------------------+
+|   |    options    | pluginVersion |                 targets                 |
+|   +---------------+---------------+-------+------------------------+--------+
+|   | reduceOptions |               |       |                        |        |
+|   |               |               |   №   |          expr          | format |
+|   +---------------+               |       |                        |        |
+| 1 |               |               |       |                        |        |
+|   |    values     | 7.3.1         +-------+------------------------+--------+
+|   |               |               |       |                        |        |
+|   +---------------+               |   1   | loki_build_info        | table  |
+|   | false         |               |       |                        |        |
+|   |               |               |       |                        |        |
++---+---------------+---------------+-------+------------------------+--------+
+|   |    options    | pluginVersion |                 targets                 |
+|   +---------------+---------------+-------+---------------------------------+
+|   | reduceOptions |               |       |                                 |
+|   |               |               |   №   |              expr               |
+|   +---------------+               |       |                                 |
+| 2 |               |               |       |                                 |
+|   |    values     | 7.3.1         +-------+---------------------------------+
+|   |               |               |       |                                 |
+|   +---------------+               |   1   | sum(log_messages_total)         |
+|   | false         |               |       |                                 |
+|   |               |               |       |                                 |
++---+---------------+---------------+-------+---------------------------------+
+`);
+  });
 });
