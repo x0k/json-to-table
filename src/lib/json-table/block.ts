@@ -139,6 +139,9 @@ export function stretchCellsToRight<V>({ height, rows, width }: Block<V>) {
   >(height);
   for (let i = 0; i < rows.length; i++) {
     const { cells, columns } = rows[i];
+    if (!cells.length) {
+      continue;
+    }
     const index = cells.length - 1;
     rightPositions[i] = {
       cell: cells[index],
