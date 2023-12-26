@@ -3,7 +3,7 @@ import {
   stretchCellsToBottom,
   stretchCellsToRight,
   makeBlockScaler,
-  areProportionalBlocksEqual,
+  areBlocksEqual,
 } from "./block";
 
 describe("stretchCellsToBottom", () => {
@@ -288,10 +288,10 @@ describe("makeBlockScaler", () => {
   });
 });
 
-describe("areProportionalBlocksEqual", () => {
+describe("areBlocksEqual", () => {
   it("Should return true for equal blocks", () => {
     expect(
-      areProportionalBlocksEqual({
+      areBlocksEqual({
         blocks: [
           {
             height: 1,
@@ -340,15 +340,15 @@ describe("areProportionalBlocksEqual", () => {
             ],
           },
         ],
-        lcmHeight: 2,
-        lcmWidth: 4,
+        height: 2,
+        width: 4,
       })
     ).toBe(true);
   });
 
   it("Should return false for unequal blocks", () => {
     expect(
-      areProportionalBlocksEqual({
+      areBlocksEqual({
         blocks: [
           {
             height: 1,
@@ -403,9 +403,67 @@ describe("areProportionalBlocksEqual", () => {
             ],
           },
         ],
-        lcmWidth: 6,
-        lcmHeight: 1,
+        width: 6,
+        height: 1,
       })
     ).toBe(false);
+  });
+  
+  it("Should return true for equal blocks with different sizes", () => {
+    expect(
+      areBlocksEqual({
+        blocks: [
+          {
+            height: 1,
+            width: 2,
+            rows: [
+              {
+                cells: [
+                  {
+                    height: 1,
+                    width: 1,
+                    value: 1,
+                    type: CellType.Value,
+                  },
+                  {
+                    height: 1,
+                    width: 1,
+                    value: 2,
+                    type: CellType.Value,
+                  },
+                ],
+                columns: [0, 1],
+              },
+            ],
+          },
+          {
+            height: 1,
+            width: 3,
+            rows: [
+              {
+                cells: [
+                  {
+                    height: 1,
+                    width: 1,
+                    value: 1,
+                    type: CellType.Value,
+                  },
+                  {
+                    height: 1,
+                    width: 2,
+                    value: 2,
+                    type: CellType.Value,
+                  },
+                ],
+                columns: [0, 1],
+              },
+            ],
+          },
+        ],
+        width: 3,
+        widthIsLcm: false,
+        height: 1,
+      })
+    ).toBe(true);
   });
 });

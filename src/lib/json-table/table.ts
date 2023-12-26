@@ -16,7 +16,7 @@ import {
 } from "./core";
 import { concatRows, rowPrepend, shiftColumns, shiftRows } from "./row";
 import {
-  areProportionalBlocksEqual,
+  areBlocksEqual,
   makeBlockScaler,
   makeHorizontalBlockStacker,
   makeVerticalBlockStacker,
@@ -28,16 +28,40 @@ export interface BakeOptions<V> {
   cornerCellValue: V;
 }
 
+function bestHead<V>(a: Block<V>, b: Block<V>) {
+  if (a.width === b.width) {
+    return a.height < b.height ? a : b;
+  }
+  return a.width > b.width ? a : b;
+}
+
+function bestIndexes<V>(a: Block<V>, b: Block<V>) {
+  if (a.height === b.height) {
+    return a.width < b.width ? a : b;
+  }
+  return a.height > b.height ? a : b;
+}
+
+const TABLE_COMPONENT_SELECTORS: Record<
+  TableComponent,
+  <V>(a: Block<V>, b: Block<V>) => Block<V>
+> = {
+  head: bestHead,
+  indexes: bestIndexes,
+};
+
 export function tryDeduplicateComponent<V>(
   tables: Table<V>[],
-  component: "head" | "indexes",
+  component: TableComponent,
   proportionalResizeGuard: ProportionalResizeGuard
 ): Block<V> | null {
   const { [component]: cmp } = tables[0];
   if (!cmp) {
     return null;
   }
+  const select = TABLE_COMPONENT_SELECTORS[component];
   const blocks = [cmp];
+  let bestCmp = cmp;
   let lcmHeight = cmp.height;
   let lcmWidth = cmp.width;
   let maxHeight = cmp.height;
@@ -47,24 +71,28 @@ export function tryDeduplicateComponent<V>(
     if (!cmp) {
       return null;
     }
+    bestCmp = select(bestCmp, cmp);
     maxHeight = max(maxHeight, cmp.height);
     maxWidth = max(maxWidth, cmp.width);
     lcmHeight = lcm(lcmHeight, cmp.height);
     lcmWidth = lcm(lcmWidth, cmp.width);
     blocks.push(cmp);
   }
+  const isHeightProportional = proportionalResizeGuard(lcmHeight, maxHeight);
+  const isWidthProportional = proportionalResizeGuard(lcmWidth, maxWidth);
   if (
-    !proportionalResizeGuard(lcmHeight, maxHeight) ||
-    !proportionalResizeGuard(lcmWidth, maxWidth) ||
-    !areProportionalBlocksEqual({
+    !(component === "head" ? isHeightProportional : isWidthProportional) ||
+    !areBlocksEqual({
       blocks,
-      lcmWidth,
-      lcmHeight,
+      width: isWidthProportional ? lcmWidth : maxWidth,
+      widthIsLcm: isWidthProportional,
+      height: isHeightProportional ? lcmHeight : maxHeight,
+      heightIsLcm: isHeightProportional,
     })
   ) {
     return null;
   }
-  return cmp;
+  return bestCmp;
 }
 
 export function makeTableBaker<V>({

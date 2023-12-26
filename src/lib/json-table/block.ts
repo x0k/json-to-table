@@ -14,29 +14,39 @@ import {
 } from "./core";
 import { scaleRowsHorizontally, scaleRowsVertically } from "./row";
 
-export interface PreProportionalBlocksEqualOptions<V> {
+export interface AreBlocksEqualOptions<V> {
   blocks: Block<V>[];
-  lcmWidth: number;
-  lcmHeight: number;
+  width: number;
+  height: number;
+  widthIsLcm?: boolean;
+  heightIsLcm?: boolean;
 }
 
-export function areProportionalBlocksEqual<V>({
+export function areBlocksEqual<V>({
   blocks,
-  lcmWidth,
-  lcmHeight,
-}: PreProportionalBlocksEqualOptions<V>) {
+  width,
+  heightIsLcm = true,
+  height,
+  widthIsLcm = true,
+}: AreBlocksEqualOptions<V>) {
   const blocksRows = blocks.map((b) => {
-    const wMultiplier = lcmWidth / b.width;
-    const hMultiplier = lcmHeight / b.height;
-    const newRows = array(lcmHeight, () => new Array<Cell<V>>(lcmWidth));
+    const wMultiplier = widthIsLcm ? width / b.width : 1;
+    const hMultiplier = heightIsLcm ? height / b.height : 1;
+    const newRows = array(height, () => new Array<Cell<V>>(width));
     for (let i = 0; i < b.rows.length; i++) {
       const { cells, columns } = b.rows[i];
       for (let j = 0; j < cells.length; j++) {
         const cell = cells[j];
         const row = i * hMultiplier;
-        const rowEnd = row + cell.height * hMultiplier;
+        let rowEnd = row + cell.height * hMultiplier;
+        if (!heightIsLcm && rowEnd === b.height && rowEnd < height) {
+          rowEnd = height;
+        }
         const col = columns[j] * wMultiplier;
-        const colEnd = col + cell.width * wMultiplier;
+        let colEnd = col + cell.width * wMultiplier;
+        if (!widthIsLcm && colEnd === b.width && colEnd < width) {
+          colEnd = width;
+        }
         for (let k = row; k < rowEnd; k++) {
           const newRow = newRows[k];
           for (let l = col; l < colEnd; l++) {
@@ -48,10 +58,10 @@ export function areProportionalBlocksEqual<V>({
     return newRows;
   });
   // Loop over rows
-  for (let i = 0; i < lcmHeight; i++) {
+  for (let i = 0; i < height; i++) {
     const firstBlockRow = blocksRows[0][i];
     // Loop over cells
-    for (let j = 0; j < lcmWidth; j++) {
+    for (let j = 0; j < width; j++) {
       const firstBlockCell = firstBlockRow[j];
       // Loop over other blocks
       for (let k = 1; k < blocks.length; k++) {
