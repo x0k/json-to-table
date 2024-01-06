@@ -5,7 +5,7 @@ import { escapeHtml } from "@/lib/html";
 export const HTML_TABLE_STYLES = `table, th, td {border: 1px solid black; border-collapse: collapse;} th, td {padding: 5px; text-align: left;} th:has(> b), td:has(> b) {text-align: center;}`;
 
 export function renderTable(model: Block) {
-  return `<table>${model.rows
+  return `<table>${model.data
     .map(
       (row) =>
         `<tr>${row.cells

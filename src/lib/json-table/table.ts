@@ -6,7 +6,7 @@ import {
   BlockCompositor,
   CellType,
   ProportionalResizeGuard,
-  Row,
+  Cells,
   TABLE_COMPONENT_SIZE_ASPECTS,
   TABLE_COMPONENT_OPPOSITES,
   Table,
@@ -107,10 +107,10 @@ export function makeTableBaker<V>({
     const useHead = bakeHead && head !== null;
     const useIndexes = bakeIndexes && indexes !== null;
     const withIndexesRows = useIndexes
-      ? indexes.rows.map((row, i) =>
-          concatRows(row, indexes.width, body.rows[i])
+      ? indexes.data.map((row, i) =>
+          concatRows(row, indexes.width, body.data[i])
         )
-      : body.rows;
+      : body.data;
     const width = body.width + (useIndexes ? indexes.width : 0);
     if (!useHead) {
       return {
@@ -124,18 +124,18 @@ export function makeTableBaker<V>({
       return {
         height,
         width,
-        rows: head.rows.concat(withIndexesRows),
+        rows: head.data.concat(withIndexesRows),
       };
     }
-    const firstHeadRow = head.rows[0];
-    const rows: Row<V>[] = [
+    const firstHeadRow = head.data[0];
+    const rows: Cells<V>[] = [
       rowPrepend(firstHeadRow, {
         height: head.height,
         width: indexes.width,
         value: cornerCellValue,
         type: CellType.Corner,
       }),
-      ...shiftRows(head.rows.slice(1), indexes.width),
+      ...shiftRows(head.data.slice(1), indexes.width),
       ...withIndexesRows,
     ];
     return {
@@ -172,7 +172,7 @@ export function tryStackTableComponent<V>(
         blocks.push({
           height: cmp.height + opposite.height,
           width: cmp.width,
-          rows: [
+          data: [
             {
               cells: [
                 {
@@ -188,7 +188,7 @@ export function tryStackTableComponent<V>(
               cells: [],
               columns: [],
             })),
-            ...cmp.rows,
+            ...cmp.data,
           ],
         });
         break;
@@ -196,7 +196,7 @@ export function tryStackTableComponent<V>(
         blocks.push({
           height: cmp.height,
           width: cmp.width + opposite.width,
-          rows: [
+          data: [
             {
               cells: [
                 {
@@ -205,14 +205,14 @@ export function tryStackTableComponent<V>(
                   value: cornerCellValue,
                   type: CellType.Corner,
                 },
-                ...cmp.rows[0].cells,
+                ...cmp.data[0].cells,
               ],
               columns: [
                 0,
-                ...shiftColumns(cmp.rows[0].columns, opposite.width),
+                ...shiftColumns(cmp.data[0].columns, opposite.width),
               ],
             },
-            ...cmp.rows.slice(1),
+            ...cmp.data.slice(1),
           ],
         });
         break;

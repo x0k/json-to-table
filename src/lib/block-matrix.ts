@@ -1,12 +1,12 @@
 import { array } from "@/lib/array";
 import { Matrix, matrix } from "@/lib/matrix";
 
-import { Block, Row, CellType, Cell } from "@/lib/json-table";
+import { Block, Cells, CellType, Cell } from "@/lib/json-table";
 
 const UNDEFINED_CELL = Symbol("undefined cell");
 
 export function createMatrix<T, R>(
-  { height, width, rows }: Block<T>,
+  { height, width, data: rows }: Block<T>,
   getValue: (
     cell: Cell<T>,
     rowIndex: number,
@@ -45,7 +45,7 @@ export function fromMatrix<T, R>(
   const height = matrix.length;
   const width = matrix[0].length;
   const cells = new Set<T>();
-  const rows = array(height, (): Row<R> => ({
+  const rows = array(height, (): Cells<R> => ({
     cells: [],
     columns: [],
   }));
@@ -78,6 +78,6 @@ export function fromMatrix<T, R>(
   return {
     height,
     width,
-    rows,
+    data: rows,
   };
 }

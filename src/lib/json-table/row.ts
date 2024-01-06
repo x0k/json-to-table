@@ -1,26 +1,30 @@
 import { array } from "@/lib/array";
 
-import { Cell, Row } from "./core";
+import { Cell, Cells, Rows } from "./core";
 
 export function shiftColumns(columns: number[], offset: number) {
   return columns.map((column) => column + offset);
 }
 
-export function rowPrepend<V>(row: Row<V>, cell: Cell<V>) {
+export function rowPrepend<V>(row: Cells<V>, cell: Cell<V>) {
   return {
     cells: [cell].concat(row.cells),
     columns: [0].concat(shiftColumns(row.columns, cell.width)),
   };
 }
 
-export function shiftRows<V>(rows: Row<V>[], offset: number) {
+export function shiftRows<V>(rows: Cells<V>[], offset: number) {
   return rows.map((row) => ({
     cells: row.cells,
     columns: shiftColumns(row.columns, offset),
   }));
 }
 
-export function concatRows<V>(a: Row<V>, aWidth: number, b: Row<V>): Row<V> {
+export function concatRows<V>(
+  a: Cells<V>,
+  aWidth: number,
+  b: Cells<V>
+): Cells<V> {
   return {
     cells: a.cells.concat(b.cells),
     columns: a.columns.concat(shiftColumns(b.columns, aWidth)),
@@ -28,17 +32,10 @@ export function concatRows<V>(a: Row<V>, aWidth: number, b: Row<V>): Row<V> {
 }
 
 export function scaleRowsVertically<V>(
-  rows: Row<V>[],
+  { rows, indexes }: Rows<V>,
   multiplier: number,
-  finalHeight: number,
-) {
-  const newRows = array(
-    finalHeight,
-    (): Row<V> => ({
-      cells: [],
-      columns: [],
-    })
-  );
+  finalHeight: number
+): void {
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
     const newRow = newRows[i * multiplier];
@@ -51,10 +48,9 @@ export function scaleRowsVertically<V>(
       });
     }
   }
-  return newRows;
 }
 
-export function scaleRowsHorizontally<V>(rows: Row<V>[], multiplier: number) {
+export function scaleRowsHorizontally<V>(rows: Cells<V>[], multiplier: number) {
   return rows.map((row) => ({
     cells: row.cells.map((cell) => ({
       ...cell,

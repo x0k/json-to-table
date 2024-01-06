@@ -18,7 +18,7 @@ describe("blockToASCII", () => {
     const table: Block = {
       width: 1,
       height: 1,
-      rows: [
+      data: [
         {
           cells: [
             {
@@ -44,7 +44,7 @@ describe("blockToASCII", () => {
     const table: Block = {
       width: 1,
       height: 1,
-      rows: [
+      data: [
         {
           cells: [
             {

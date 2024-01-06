@@ -11,7 +11,7 @@ describe("stretchCellsToBottom", () => {
     const data: Block = {
       height: 2,
       width: 3,
-      rows: [
+      data: [
         {
           cells: [
             {
@@ -52,7 +52,7 @@ describe("stretchCellsToBottom", () => {
     const expected: Block = {
       height: 2,
       width: 3,
-      rows: [
+      data: [
         {
           cells: [
             {
@@ -98,7 +98,7 @@ describe("stretchCellsToRight", () => {
     const data: Block = {
       height: 3,
       width: 2,
-      rows: [
+      data: [
         {
           cells: [
             {
@@ -143,7 +143,7 @@ describe("stretchCellsToRight", () => {
     const expected: Block = {
       height: 3,
       width: 2,
-      rows: [
+      data: [
         {
           cells: [
             {
@@ -195,7 +195,7 @@ describe("makeBlockScaler", () => {
     const data: Block = {
       height: 2,
       width: 2,
-      rows: [
+      data: [
         {
           cells: [
             {
@@ -235,7 +235,7 @@ describe("makeBlockScaler", () => {
     const expected: Block = {
       height: 5,
       width: 2,
-      rows: [
+      data: [
         {
           cells: [
             {
@@ -296,7 +296,7 @@ describe("areBlocksEqual", () => {
           {
             height: 1,
             width: 2,
-            rows: [
+            data: [
               {
                 cells: [
                   {
@@ -319,7 +319,7 @@ describe("areBlocksEqual", () => {
           {
             height: 2,
             width: 4,
-            rows: [
+            data: [
               {
                 cells: [
                   {
@@ -353,7 +353,7 @@ describe("areBlocksEqual", () => {
           {
             height: 1,
             width: 2,
-            rows: [
+            data: [
               {
                 cells: [
                   {
@@ -376,7 +376,7 @@ describe("areBlocksEqual", () => {
           {
             height: 1,
             width: 3,
-            rows: [
+            data: [
               {
                 cells: [
                   {
@@ -416,7 +416,7 @@ describe("areBlocksEqual", () => {
           {
             height: 1,
             width: 2,
-            rows: [
+            data: [
               {
                 cells: [
                   {
@@ -439,7 +439,7 @@ describe("areBlocksEqual", () => {
           {
             height: 1,
             width: 3,
-            rows: [
+            data: [
               {
                 cells: [
                   {

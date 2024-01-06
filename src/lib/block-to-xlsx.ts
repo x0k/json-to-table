@@ -45,7 +45,7 @@ export function calculateSheetData(
     matrix,
     (cell) => cell.cell.type,
     (cell, row, col) => ({ value: cell.cell.value, row: row + 1, col: col + 1 })
-  ).rows.flatMap((r) => r.cells);
+  ).data.flatMap((r) => r.cells);
   return {
     widths: array(width, (i) =>
       columnWidth(

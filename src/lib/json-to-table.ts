@@ -6,7 +6,7 @@ import {
 } from "@/lib/json";
 import {
   Table,
-  Row,
+  Cells,
   makeTableFromValue,
   makeProportionalResizeGuard,
   ComposedTable,
@@ -60,7 +60,7 @@ export function makeTableFactory({
     const hasIndexes = indexes !== null;
     const collapse = hasIndexes && collapseIndexes;
     const indexesRows = hasIndexes
-      ? indexes.rows.slice()
+      ? indexes.data.slice()
       : array(body.height, () => ({
           cells: [],
           columns: [],
@@ -114,7 +114,7 @@ export function makeTableFactory({
       head,
       body,
       indexes: {
-        rows: indexesRows,
+        data: indexesRows,
         width: hasIndexes ? indexes.width + Number(!collapseIndexes) : 1,
         height: h,
       },
@@ -126,7 +126,7 @@ export function makeTableFactory({
     titles: string[]
   ): Table {
     const hasHeaders = head !== null;
-    const newHead: Row = {
+    const newHead: Cells = {
       cells: [],
       columns: [],
     };
@@ -144,7 +144,7 @@ export function makeTableFactory({
     }
     return {
       head: {
-        rows: hasHeaders ? [newHead, ...head.rows] : [newHead],
+        data: hasHeaders ? [newHead, ...head.data] : [newHead],
         width: w,
         height: hasHeaders ? head.height + 1 : 1,
       },

@@ -9,7 +9,7 @@ describe("json-table-xlsx", () => {
       const table: Block = {
         width: 4,
         height: 3,
-        rows: [
+        data: [
           {
             cells: [
               {
