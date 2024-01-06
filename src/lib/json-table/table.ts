@@ -14,7 +14,7 @@ import {
   TableCompositor,
   ComposedTable,
 } from "./core";
-import { concatRows, rowPrepend, shiftColumns, shiftRows } from "./row";
+import { appendCells, prependCell, shiftColumns, shiftRows } from "./row";
 import {
   areBlocksEqual,
   makeBlockScaler,
@@ -108,7 +108,7 @@ export function makeTableBaker<V>({
     const useIndexes = bakeIndexes && indexes !== null;
     const withIndexesRows = useIndexes
       ? indexes.data.map((row, i) =>
-          concatRows(row, indexes.width, body.data[i])
+          appendCells(row, indexes.width, body.data[i])
         )
       : body.data;
     const width = body.width + (useIndexes ? indexes.width : 0);
@@ -129,7 +129,7 @@ export function makeTableBaker<V>({
     }
     const firstHeadRow = head.data[0];
     const rows: Cells<V>[] = [
-      rowPrepend(firstHeadRow, {
+      prependCell(firstHeadRow, {
         height: head.height,
         width: indexes.width,
         value: cornerCellValue,

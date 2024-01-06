@@ -32,9 +32,12 @@ export function areBlocksEqual<V>({
   const blocksRows = blocks.map((b) => {
     const wMultiplier = widthIsLcm ? width / b.width : 1;
     const hMultiplier = heightIsLcm ? height / b.height : 1;
+    const { rows, indexes } = b.data;
     const newRows = array(height, () => new Array<Cell<V>>(width));
-    for (let i = 0; i < b.data.length; i++) {
-      const { cells, columns } = b.data[i];
+    for (let i = 0; i < rows.length; i++) {
+      const index = indexes[i];
+      const { cells, columns } = rows[i];
+
       for (let j = 0; j < cells.length; j++) {
         const cell = cells[j];
         const row = i * hMultiplier;
@@ -98,7 +101,11 @@ function applyResize<V>(
   return newRows;
 }
 
-export function stretchCellsToBottom<V>({ height, data: rows, width }: Block<V>) {
+export function stretchCellsToBottom<V>({
+  height,
+  data: rows,
+  width,
+}: Block<V>) {
   // TODO: Calculate yShift by row index and cell height
   const yShift = array(width, () => 0);
   const bottomPositions = new Array<
@@ -144,7 +151,11 @@ export function stretchCellsToBottom<V>({ height, data: rows, width }: Block<V>)
   };
 }
 
-export function stretchCellsToRight<V>({ height, data: rows, width }: Block<V>) {
+export function stretchCellsToRight<V>({
+  height,
+  data: rows,
+  width,
+}: Block<V>) {
   const rightPositions = new Array<
     | {
         cell: Cell<V>;

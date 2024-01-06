@@ -35,7 +35,7 @@ export interface Rows<V = JSONPrimitiveOrNull> {
 }
 
 export interface Block<V = JSONPrimitiveOrNull> extends Sized {
-  data: Rows<V>[];
+  data: Rows<V>;
 }
 
 export interface Table<V = JSONPrimitiveOrNull> {
@@ -97,17 +97,15 @@ export function makeTableFromValue<V>(value: V): Table<V> {
     body: {
       height: 1,
       width: 1,
-      data: [
-        {
-          rows: [
-            {
-              cells: [{ height: 1, width: 1, value, type: CellType.Value }],
-              columns: [0],
-            },
-          ],
-          indexes: [0],
-        },
-      ],
+      data: {
+        rows: [
+          {
+            cells: [{ height: 1, width: 1, value, type: CellType.Value }],
+            columns: [0],
+          },
+        ],
+        indexes: [0],
+      },
     },
   };
 }
