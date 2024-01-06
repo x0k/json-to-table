@@ -135,7 +135,6 @@ export function stretchCellsToBottomInPlace<V>({
     const cells = toResize.get(position.rowIndex) || new Map<number, number>();
     toResize.set(position.rowIndex, cells.set(position.colIndex, diff));
   }
-  console.log(toResize.size);
   applyResizeInPlace(data, toResize, "height");
 }
 
@@ -148,7 +147,7 @@ export function stretchCellsToRightInPlace<V>({ data, height, width }: Block<V>)
       }
     | undefined
   >(height);
-  const { rows } = data;
+  const { rows, indexes } = data;
   for (let i = 0; i < rows.length; i++) {
     const { cells, columns } = rows[i];
     if (cells.length === 0) {
@@ -162,18 +161,20 @@ export function stretchCellsToRightInPlace<V>({ data, height, width }: Block<V>)
       indexInRow,
       xTopRightCorner,
     };
-    for (let j = i; j < i + cell.height; j++) {
+    const index = indexes[i];
+    for (let j = index; j < index + cell.height; j++) {
       const rp = rightPositions[j];
       if (!rp || xTopRightCorner > rp.xTopRightCorner) {
         rightPositions[j] = point;
       }
     }
   }
-  // TODO: this algorithm can be implemented without `set` of cells
+// TODO: this algorithm can be implemented without `set` of cells
   const addedToResize = new Set<Cell<V>>();
   const toResize = new Map<number, Map<number, number>>();
-  for (let i = 0; i < height; i++) {
-    const position = rightPositions[i];
+  for (let i = 0; i < rows.length; i++) {
+    const index = indexes[i];
+    const position = rightPositions[index];
     if (!position || addedToResize.has(position.cell)) {
       continue;
     }

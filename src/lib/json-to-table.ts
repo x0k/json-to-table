@@ -65,7 +65,7 @@ export function makeTableFactory({
           cells: [],
           columns: [],
         }));
-    const idx = new Array<number>(body.height);
+    const idx = new Array<number>(0);
     let index = 0;
     for (let i = 0; i < baked.length; i++) {
       const { data, height } = baked[i];

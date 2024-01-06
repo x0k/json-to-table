@@ -107,7 +107,7 @@ describe("makeTableFactory", () => {
 `);
   });
 
-  it.only("Should deduplicate table indexes", () => {
+  it("Should deduplicate table indexes", () => {
     const table = factory(simpleIndexesDeduplication);
     const ascii = blockToASCII(bake(table));
     console.log(ascii);
