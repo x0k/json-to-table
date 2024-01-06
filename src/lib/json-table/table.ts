@@ -6,7 +6,6 @@ import {
   BlockCompositor,
   CellType,
   ProportionalResizeGuard,
-  Cells,
   TABLE_COMPONENT_SIZE_ASPECTS,
   TABLE_COMPONENT_OPPOSITES,
   Table,
@@ -14,12 +13,14 @@ import {
   TableCompositor,
   ComposedTable,
 } from "./core";
-import { appendCells, prependCell, shiftNumbers, shiftRows } from "./row";
+import { shiftNumbers } from "./row";
 import {
   areBlocksEqual,
   makeBlockScaler,
   makeHorizontalBlockStacker,
   makeVerticalBlockStacker,
+  mergeBlocksHorizontally,
+  mergeBlocksVertically,
 } from "./block";
 
 export interface BakeOptions<V> {
@@ -106,43 +107,29 @@ export function makeTableBaker<V>({
     }
     const useHead = bakeHead && head !== null;
     const useIndexes = bakeIndexes && indexes !== null;
-    const withIndexesRows = useIndexes
-      ? indexes.data.map((row, i) =>
-          appendCells(row, indexes.width, body.data[i])
-        )
-      : body.data;
+    const withIndexes = useIndexes
+      ? mergeBlocksHorizontally([indexes, body], body.height)
+      : body;
     const width = body.width + (useIndexes ? indexes.width : 0);
     if (!useHead) {
-      return {
-        height: body.height,
-        width,
-        rows: withIndexesRows,
-      };
+      return withIndexes;
     }
-    const height = body.height + head.height;
     if (!useIndexes) {
-      return {
-        height,
-        width,
-        rows: head.data.concat(withIndexesRows),
-      };
+      return mergeBlocksVertically([head, withIndexes], width);
     }
-    const firstHeadRow = head.data[0];
-    const rows: Cells<V>[] = [
-      prependCell(firstHeadRow, {
-        height: head.height,
-        width: indexes.width,
-        value: cornerCellValue,
-        type: CellType.Corner,
-      }),
-      ...shiftRows(head.data.slice(1), indexes.width),
-      ...withIndexesRows,
-    ];
-    return {
-      height,
-      width,
-      rows,
-    };
+    // TODO: factor out `prependCell(Block, Cell)` ?
+    for (let i = 0; i < head.data.rows.length; i++) {
+      shiftNumbers(head.data.rows[i].columns, indexes.width);
+    }
+    const firstHeadRow = head.data.rows[0];
+    firstHeadRow.cells.unshift({
+      height: head.height,
+      width: indexes.width,
+      value: cornerCellValue,
+      type: CellType.Corner,
+    });
+    firstHeadRow.columns.unshift(0);
+    return mergeBlocksVertically([head, withIndexes], width);
   };
 }
 
@@ -168,54 +155,61 @@ export function tryStackTableComponent<V>(
       continue;
     }
     switch (component) {
-      case "indexes":
+      case "indexes": {
+        const shifted = cmp.data.indexes.slice();
+        shiftNumbers(shifted, opposite.height);
+        shifted.unshift(0);
         blocks.push({
           height: cmp.height + opposite.height,
           width: cmp.width,
-          data: [
-            {
-              cells: [
-                {
-                  height: opposite.height,
-                  width: cmp.width,
-                  value: cornerCellValue,
-                  type: CellType.Corner,
-                },
-              ],
-              columns: [0],
-            },
-            ...array(opposite.height - 1, () => ({
-              cells: [],
-              columns: [],
-            })),
-            ...cmp.data,
-          ],
+          data: {
+            rows: [
+              {
+                cells: [
+                  {
+                    height: opposite.height,
+                    width: cmp.width,
+                    value: cornerCellValue,
+                    type: CellType.Corner,
+                  },
+                ],
+                columns: [0],
+              },
+              ...cmp.data.rows,
+            ],
+            indexes: shifted,
+          },
         });
         break;
-      case "head":
+      }
+      case "head": {
+        const shifted = cmp.data.rows[0].columns.slice();
+        shiftNumbers(shifted, opposite.width);
+        shifted.unshift(0);
         blocks.push({
           height: cmp.height,
           width: cmp.width + opposite.width,
-          data: [
-            {
-              cells: [
-                {
-                  height: cmp.height,
-                  width: opposite.width,
-                  value: cornerCellValue,
-                  type: CellType.Corner,
-                },
-                ...cmp.data[0].cells,
-              ],
-              columns: [
-                0,
-                ...shiftNumbers(cmp.data[0].columns, opposite.width),
-              ],
-            },
-            ...cmp.data.slice(1),
-          ],
+          data: {
+            rows: [
+              {
+                cells: [
+                  {
+                    height: cmp.height,
+                    width: opposite.width,
+                    value: cornerCellValue,
+                    type: CellType.Corner,
+                  },
+                  ...cmp.data.rows[0].cells,
+                ],
+                columns: shifted,
+              },
+              ...cmp.data.rows.slice(1),
+            ],
+            indexes: cmp.data.indexes,
+          },
         });
         break;
+      }
       default:
         throw new Error(`Unknown table component: ${component}`);
     }
@@ -270,12 +264,14 @@ export function makeTableStacker<C extends TableComponent, V>({
     );
     const body = blockStacker(baked);
     const aspect = TABLE_COMPONENT_SIZE_ASPECTS[opposite];
-    const scaled =
-      deduplicated && makeBlockScaler<V>(aspect, body[aspect])(deduplicated);
+    if (deduplicated) {
+      const scale = makeBlockScaler(aspect, body[aspect])
+      scale(deduplicated);
+    }
     const composedTable: ComposedTable<V> = {
       body,
       baked,
-      [deduplicationComponent as "head"]: scaled,
+      [deduplicationComponent as "head"]: deduplicated,
       [opposite as "indexes"]: stacked,
     };
     return composedTable;

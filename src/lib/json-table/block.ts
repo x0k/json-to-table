@@ -2,11 +2,9 @@ import { lcm, max } from "@/lib/math";
 import { array } from "@/lib/array";
 
 import {
-  BLOCK_SIZE_ASPECT_OPPOSITES,
   Block,
   BlockCompositor,
   BlockSizeAspect,
-  BlockTransform,
   Cell,
   ProportionalResizeGuard,
   Cells,
@@ -14,11 +12,7 @@ import {
   Rows,
   BlockTransformInPlace,
 } from "./core";
-import {
-  scaleRowsHorizontally,
-  scaleRowsVertically,
-  shiftNumbers,
-} from "./row";
+import { scaleRowsHorizontally, scaleRowsVertically } from "./row";
 
 export interface AreBlocksEqualOptions<V> {
   blocks: Block<V>[];
@@ -226,6 +220,73 @@ export function makeBlockScaler<V>(
   };
 }
 
+export function mergeBlocksVertically<V>(
+  blocks: Block<V>[],
+  width: number
+): Block<V> {
+  // TODO: first block can be used as accumulator
+  const rows = new Array<Cells<V>>(0);
+  const indexes = new Array<number>(0);
+  let index = 0;
+  for (let i = 0; i < blocks.length; i++) {
+    const { data, height } = blocks[i];
+    for (let j = 0; j < height; j++) {
+      indexes.push(index + data.indexes[j]);
+      rows.push(data.rows[j]);
+    }
+    index += height;
+  }
+  return {
+    width,
+    height: index,
+    data: { rows, indexes },
+  };
+}
+
+export function mergeBlocksHorizontally<V>(
+  blocks: Block<V>[],
+  height: number
+): Block<V> {
+  const rows = array(height, (): Cells<V> => ({ cells: [], columns: [] }));
+  let width = 0;
+  for (let i = 0; i < blocks.length; i++) {
+    const {
+      data: { rows: blockRows },
+      width: blockWidth,
+    } = blocks[i];
+    for (let j = 0; j < blockRows.length; j++) {
+      const row = rows[j];
+      const blockRow = blockRows[j];
+      for (let k = 0; k < blockRow.cells.length; k++) {
+        row.cells.push(blockRow.cells[k]);
+        row.columns.push(blockRow.columns[k] + width);
+      }
+    }
+    width += blockWidth;
+  }
+  const indexes = new Array<number>(height);
+  let shift = 0;
+  for (let i = 0; i < height; i++) {
+    if (rows[i].cells.length === 0) {
+      shift++;
+      continue;
+    }
+    rows[i - shift] = rows[i];
+    indexes[i - shift] = i;
+  }
+  rows.length -= shift;
+  indexes.length -= shift;
+  return {
+    width,
+    height,
+    data: {
+      rows,
+      indexes,
+    },
+  };
+}
+
+// TODO: combine into one function `makeBlockStacker`
 export function makeVerticalBlockStacker<V>(
   isProportionalResize: ProportionalResizeGuard
 ): BlockCompositor<V> {
@@ -240,31 +301,13 @@ export function makeVerticalBlockStacker<V>(
     const width = isProportionalResize(lcmWidth, maxWidth)
       ? lcmWidth
       : maxWidth;
-    const rows = new Array<Cells<V>>(0);
-    const indexes = new Array<number>(0);
-    let index = 0;
     const scale = makeBlockScaler<V>("width", width);
     for (let i = 0; i < blocks.length; i++) {
-      const block = blocks[i];
-      scale(block);
-      const { data, height } = block;
-      for (let j = 0; j < height; j++) {
-        indexes.push(index + data.indexes[j]);
-        rows.push(data.rows[j]);
-      }
-      index += height;
+      scale(blocks[i]);
     }
-    return {
-      width,
-      height: index,
-      data: {
-        rows,
-        indexes,
-      },
-    };
+    return mergeBlocksVertically(blocks, width);
   };
 }
-
 export function makeHorizontalBlockStacker<V>(
   isProportionalResize: ProportionalResizeGuard
 ): BlockCompositor<V> {
@@ -279,41 +322,9 @@ export function makeHorizontalBlockStacker<V>(
       ? lcmHeight
       : maxHeight;
     const scale = makeBlockScaler<V>("height", height);
-    const rows = array(height, (): Cells<V> => ({ cells: [], columns: [] }));
-    let width = 0;
     for (let i = 0; i < blocks.length; i++) {
-      const block = blocks[i];
-      scale(block);
-      const { data } = block;
-      for (let j = 0; j < data.rows.length; j++) {
-        const row = rows[j];
-        const blockRow = block.data.rows[j];
-        for (let k = 0; k < blockRow.cells.length; k++) {
-          row.cells.push(blockRow.cells[k]);
-          row.columns.push(blockRow.columns[k] + width);
-        }
-      }
-      width += block.width;
+      scale(blocks[i]);
     }
-    const indexes = new Array<number>(height);
-    let shift = 0;
-    for (let i = 0; i < height; i++) {
-      if (rows[i].cells.length === 0) {
-        shift++;
-        continue;
-      }
-      rows[i - shift] = rows[i];
-      indexes[i - shift] = i;
-    }
-    rows.length -= shift;
-    indexes.length -= shift;
-    return {
-      width,
-      height,
-      data: {
-        rows,
-        indexes,
-      },
-    };
+    return mergeBlocksHorizontally(blocks, height);
   };
 }

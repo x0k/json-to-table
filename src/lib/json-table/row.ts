@@ -1,30 +1,9 @@
-import { Cell, Cells, Rows } from "./core";
+import { Rows } from "./core";
 
 export function shiftNumbers(columns: number[], offset: number): void {
   for (let i = 0; i < columns.length; i++) {
     columns[i] += offset;
   }
-}
-
-export function prependCell<V>(
-  { cells, columns }: Cells<V>,
-  cell: Cell<V>
-): void {
-  cells.unshift(cell);
-  shiftNumbers(columns, cell.width);
-  columns.unshift(0);
-}
-
-export function shiftRows<V>({ rows }: Rows<V>, offset: number): void {
-  for (let i = 0; i < rows.length; i++) {
-    shiftNumbers(rows[i].columns, offset);
-  }
-}
-
-export function appendCells<V>(a: Cells<V>, aWidth: number, b: Cells<V>): void {
-  shiftNumbers(b.columns, aWidth);
-  a.cells.push(...b.cells);
-  a.columns.push(...b.columns);
 }
 
 export function scaleRowsVertically<V>(
