@@ -1,7 +1,13 @@
 import { array } from "@/lib/array";
 import { Matrix, matrix } from "@/lib/matrix";
 
-import { Block, Cells, CellType, Cell } from "@/lib/json-table";
+import {
+  Block,
+  Cells,
+  CellType,
+  Cell,
+  compressRawRowsInPlaceAndMakeIndexes,
+} from "@/lib/json-table";
 
 const UNDEFINED_CELL = Symbol("undefined cell");
 
@@ -20,13 +26,14 @@ export function createMatrix<T, R>(
     () => UNDEFINED_CELL
   );
   for (let i = 0; i < height; i++) {
-    const row = rows[i];
+    const row = rows.rows[i];
+    const index = rows.indexes[i];
     for (let j = 0; j < row.cells.length; j++) {
       const cell = row.cells[j];
       const col = row.columns[j];
       const { height: cellHeight, width: cellWidth } = cell;
-      const value = getValue(cell, i, col, j);
-      for (let h = i; h < i + cellHeight && h < height; h++) {
+      const value = getValue(cell, index, col, j);
+      for (let h = index; h < index + cellHeight && h < height; h++) {
         for (let w = col; w < col + cellWidth && w < width; w++) {
           m[h][w] = value;
         }
@@ -45,10 +52,13 @@ export function fromMatrix<T, R>(
   const height = matrix.length;
   const width = matrix[0].length;
   const cells = new Set<T>();
-  const rows = array(height, (): Cells<R> => ({
-    cells: [],
-    columns: [],
-  }));
+  const rows = array(
+    height,
+    (): Cells<R> => ({
+      cells: [],
+      columns: [],
+    })
+  );
   for (let i = 0; i < height; i++) {
     let j = 0;
     while (j < width) {
@@ -75,9 +85,10 @@ export function fromMatrix<T, R>(
       cells.add(cell);
     }
   }
+  const indexes = compressRawRowsInPlaceAndMakeIndexes(rows);
   return {
     height,
     width,
-    data: rows,
+    data: { rows, indexes },
   };
 }

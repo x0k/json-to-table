@@ -11,8 +11,8 @@ import {
   makeProportionalResizeGuard,
   ComposedTable,
   CellType,
-  shiftNumbers,
-  makeTableStacker,
+  shiftPositionsInPlace,
+  makeTableInPlaceStacker,
 } from "@/lib/json-table";
 import { isRecord } from "@/lib/guards";
 import { array } from "@/lib/array";
@@ -42,81 +42,69 @@ export function makeTableFactory({
   const isProportionalResize = makeProportionalResizeGuard(
     proportionalSizeAdjustmentThreshold
   );
-  const verticalTableStacker = makeTableStacker({
+  const verticalTableInPlaceStacker = makeTableInPlaceStacker({
     deduplicationComponent: "head",
     isProportionalResize,
     cornerCellValue,
   });
-  const horizontalTableStacker = makeTableStacker({
+  const horizontalTableInPlaceStacker = makeTableInPlaceStacker({
     deduplicationComponent: "indexes",
     isProportionalResize,
     cornerCellValue,
   });
 
-  function addIndexes(
+  function addIndexesInPlace(
     { baked, body, head, indexes }: ComposedTable,
     titles: string[]
   ): Table {
     const hasIndexes = indexes !== null;
     const collapse = hasIndexes && collapseIndexes;
-    const indexesRows = hasIndexes
-      ? indexes.data.slice()
+    const rawRows = hasIndexes
+      ? indexes.data.rows
       : array(body.height, () => ({
           cells: [],
           columns: [],
         }));
-    let h = 0;
+    const idx = new Array<number>(body.height);
+    let index = 0;
     for (let i = 0; i < baked.length; i++) {
-      const height = baked[i].height;
+      const { data, height } = baked[i];
       if (collapse) {
-        let y = 0;
-        while (y < height) {
-          const hy = h + y;
-          const cells = indexesRows[hy].cells;
-          indexesRows[hy] = {
-            cells: [
-              {
-                ...cells[0],
-                value: `${titles[i]}.${cells[0].value}`,
-              },
-              ...cells.slice(1),
-            ],
-            columns: indexesRows[hy].columns,
-          };
-          y += cells[0].height;
+        for (let j = 0; j < data.rows.length; j++) {
+          const row = rawRows[index + j];
+          row.cells[0].value = `${titles[i]}.${row.cells[0].value}`;
+          idx.push(index + data.indexes[j]);
         }
       } else {
-        indexesRows[h] = {
-          cells: [
-            {
-              height,
-              width: 1,
-              value: titles[i],
-              type: CellType.Index,
-            },
-            ...indexesRows[h].cells,
-          ],
-          columns: [0, ...shiftNumbers(indexesRows[h].columns, 1)],
-        };
-        if (hasIndexes) {
-          for (let j = 1; j < height; j++) {
-            const hj = h + j;
-            indexesRows[hj] = {
-              cells: indexesRows[hj].cells,
-              columns: shiftNumbers(indexesRows[hj].columns, 1),
-            };
+        const rawRow = rawRows[index];
+        rawRow.cells.unshift({
+          height,
+          width: 1,
+          value: titles[i],
+          type: CellType.Index,
+        });
+        shiftPositionsInPlace(rawRow.columns, 1);
+        rawRow.columns.unshift(0);
+        idx.push(index);
+        for (let j = 1; j < data.rows.length; j++) {
+          idx.push(index + data.indexes[j]);
+          if (hasIndexes) {
+            shiftPositionsInPlace(rawRows[index + j].columns, 1);
           }
         }
       }
-      h += height;
+      index += data.rows.length;
     }
     return {
       head,
       body,
       indexes: {
-        data: indexesRows,
+        height: body.height,
         width: hasIndexes ? indexes.width + Number(!collapseIndexes) : 1,
-        height: h,
+        data: {
+          rows: rawRows,
+          indexes: idx,
+        },
       },
     };
   }
@@ -142,9 +130,16 @@ export function makeTableFactory({
       newHead.columns.push(w);
       w += width;
     }
+    if (hasHeaders) {
+      head.data.rows.unshift(newHead);
+      shiftPositionsInPlace(head.data.indexes, 1);
+      head.data.indexes.unshift(0);
+    }
     return {
       head: {
-        data: hasHeaders ? [newHead, ...head.data] : [newHead],
+        data: hasHeaders
+          ? head.data
+          : { rows: [newHead], indexes: [0] },
         width: w,
         height: hasHeaders ? head.height + 1 : 1,
       },
@@ -154,11 +149,11 @@ export function makeTableFactory({
   }
 
   function stackTablesVertical(titles: string[], tables: Table[]): Table {
-    const stacked = verticalTableStacker(tables);
-    return addIndexes(stacked, titles);
+    const stacked = verticalTableInPlaceStacker(tables);
+    return addIndexesInPlace(stacked, titles);
   }
   function stackTablesHorizontal(titles: string[], tables: Table[]): Table {
-    const stacked = horizontalTableStacker(tables);
+    const stacked = horizontalTableInPlaceStacker(tables);
     return addHeaders(stacked, titles);
   }
   function transformRecord(record: Record<string, JSONValue>): Table {
@@ -205,10 +200,7 @@ export function makeTableFactory({
       if (combineArraysOfObjects && isRecords) {
         return transformRecord(Object.assign({}, ...value));
       }
-      if (
-        stabilizeOrderOfPropertiesInArraysOfObjects &&
-        isRecords
-      ) {
+      if (stabilizeOrderOfPropertiesInArraysOfObjects && isRecords) {
         const stabilize = makeObjectPropertiesStabilizer();
         return transformArray(value as JSONRecord[], (value) => {
           const [keys, values] = stabilize(value);

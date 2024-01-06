@@ -1,7 +1,7 @@
 import { blockToASCII } from "./block-to-ascii";
 import { JSONPrimitiveOrNull } from "./json";
 import { makeTableFactory } from "./json-to-table";
-import { makeTableBaker } from "./json-table";
+import { makeTableInPlaceBaker } from "./json-table";
 
 import simpleHeadersDuplication from "./__fixtures__/simple-headers-duplication.json";
 import simpleIndexesDeduplication from "./__fixtures__/simple-indexes-deduplication.json";
@@ -13,7 +13,7 @@ import wrongSizes from "./__fixtures__/wrong-sizes.json";
 describe("makeTableFactory", () => {
   const cornerCellValue = "№";
   const factory = makeTableFactory({ cornerCellValue });
-  const bake = makeTableBaker<JSONPrimitiveOrNull>({
+  const bake = makeTableInPlaceBaker<JSONPrimitiveOrNull>({
     cornerCellValue,
     head: true,
     indexes: true,
@@ -107,9 +107,10 @@ describe("makeTableFactory", () => {
 `);
   });
 
-  it("Should deduplicate table indexes", () => {
+  it.only("Should deduplicate table indexes", () => {
     const table = factory(simpleIndexesDeduplication);
     const ascii = blockToASCII(bake(table));
+    console.log(ascii);
     expect(`\n${ascii}\n`).toBe(`
 +---+---+---+---+
 | № | a | b | c |

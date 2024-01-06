@@ -1,8 +1,8 @@
 import { Block, CellType } from "./core";
 import {
-  stretchCellsToBottom,
-  stretchCellsToRight,
-  makeBlockScaler,
+  stretchCellsToBottomInPlace,
+  stretchCellsToRightInPlace,
+  makeBlockInPlaceScaler,
   areBlocksEqual,
 } from "./block";
 
@@ -94,7 +94,7 @@ describe("stretchCellsToBottom", () => {
         indexes: [0, 1],
       },
     };
-    stretchCellsToBottom(data);
+    stretchCellsToBottomInPlace(data);
     expect(data).toEqual(expected);
   });
 });
@@ -197,14 +197,14 @@ describe("stretchCellsToRight", () => {
         indexes: [0, 1, 2],
       },
     };
-    stretchCellsToRight(data);
+    stretchCellsToRightInPlace(data);
     expect(data).toEqual(expected);
   });
 });
 
 describe("makeBlockScaler", () => {
   it("Should scale correctly height and fill empty cells", () => {
-    const scale = makeBlockScaler("height", 5);
+    const scale = makeBlockInPlaceScaler("height", 5);
     const data: Block = {
       height: 2,
       width: 2,

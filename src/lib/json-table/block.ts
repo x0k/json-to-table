@@ -12,7 +12,7 @@ import {
   Rows,
   BlockTransformInPlace,
 } from "./core";
-import { scaleRowsHorizontally, scaleRowsVertically } from "./row";
+import { scaleRowsHorizontallyInPlace, scaleRowsVerticallyInPlace } from "./row";
 
 export interface AreBlocksEqualOptions<V> {
   blocks: Block<V>[];
@@ -78,7 +78,7 @@ export function areBlocksEqual<V>({
   return true;
 }
 
-function applyResize<V>(
+function applyResizeInPlace<V>(
   { rows }: Rows<V>,
   toResize: Map<number, Map<number, number>>,
   sizeAspect: BlockSizeAspect
@@ -91,7 +91,7 @@ function applyResize<V>(
   }
 }
 
-export function stretchCellsToBottom<V>({
+export function stretchCellsToBottomInPlace<V>({
   data,
   height,
   width,
@@ -136,10 +136,10 @@ export function stretchCellsToBottom<V>({
     toResize.set(position.rowIndex, cells.set(position.colIndex, diff));
   }
   console.log(toResize.size);
-  applyResize(data, toResize, "height");
+  applyResizeInPlace(data, toResize, "height");
 }
 
-export function stretchCellsToRight<V>({ data, height, width }: Block<V>) {
+export function stretchCellsToRightInPlace<V>({ data, height, width }: Block<V>) {
   const rightPositions = new Array<
     | {
         cell: Cell<V>;
@@ -185,37 +185,37 @@ export function stretchCellsToRight<V>({ data, height, width }: Block<V>) {
     const cells = toResize.get(i) || new Map<number, number>();
     toResize.set(i, cells.set(position.indexInRow, diff));
   }
-  applyResize(data, toResize, "width");
+  applyResizeInPlace(data, toResize, "width");
 }
 
-const SIZE_ASPECT_TO_ROWS_SCALER: Record<BlockSizeAspect, RowsScaler<any>> = {
-  width: scaleRowsHorizontally,
-  height: scaleRowsVertically,
+const SIZE_ASPECT_TO_ROWS_IN_PLACE_SCALER: Record<BlockSizeAspect, RowsScaler<any>> = {
+  width: scaleRowsHorizontallyInPlace,
+  height: scaleRowsVerticallyInPlace,
 };
 
-const SIZE_ASPECT_TO_CELLS_STRETCHER: Record<
+const SIZE_ASPECT_TO_CELLS_IN_PLACE_STRETCHER: Record<
   BlockSizeAspect,
   BlockTransformInPlace<any>
 > = {
-  width: stretchCellsToRight,
-  height: stretchCellsToBottom,
+  width: stretchCellsToRightInPlace,
+  height: stretchCellsToBottomInPlace,
 };
 
-export function makeBlockScaler<V>(
+export function makeBlockInPlaceScaler<V>(
   sizeAspect: BlockSizeAspect,
   finalSize: number
 ): BlockTransformInPlace<V> {
-  const scaleRows = SIZE_ASPECT_TO_ROWS_SCALER[sizeAspect];
-  const stretchCells = SIZE_ASPECT_TO_CELLS_STRETCHER[sizeAspect];
+  const scaleRowsInPlace = SIZE_ASPECT_TO_ROWS_IN_PLACE_SCALER[sizeAspect];
+  const stretchCellsInPlace = SIZE_ASPECT_TO_CELLS_IN_PLACE_STRETCHER[sizeAspect];
   return (table) => {
     const multiplier = Math.floor(finalSize / table[sizeAspect]);
     if (multiplier > 1) {
-      scaleRows(table.data, multiplier);
+      scaleRowsInPlace(table.data, multiplier);
     }
     let oldSize = table[sizeAspect];
     table[sizeAspect] = finalSize;
     if (finalSize - oldSize * multiplier > 0) {
-      stretchCells(table);
+      stretchCellsInPlace(table);
     }
   };
 }
@@ -243,6 +243,22 @@ export function mergeBlocksVertically<V>(
   };
 }
 
+export function compressRawRowsInPlaceAndMakeIndexes<V>(rows: Cells<V>[]): number[] {
+  const indexes = new Array<number>(rows.length);
+  let shift = 0;
+  for (let i = 0; i < rows.length; i++) {
+    if (rows[i].cells.length === 0) {
+      shift++;
+      continue;
+    }
+    rows[i - shift] = rows[i];
+    indexes[i - shift] = i;
+  }
+  rows.length -= shift;
+  indexes.length -= shift;
+  return indexes;
+}
+
 export function mergeBlocksHorizontally<V>(
   blocks: Block<V>[],
   height: number
@@ -264,18 +280,8 @@ export function mergeBlocksHorizontally<V>(
     }
     width += blockWidth;
   }
-  const indexes = new Array<number>(height);
-  let shift = 0;
-  for (let i = 0; i < height; i++) {
-    if (rows[i].cells.length === 0) {
-      shift++;
-      continue;
-    }
-    rows[i - shift] = rows[i];
-    indexes[i - shift] = i;
-  }
-  rows.length -= shift;
-  indexes.length -= shift;
+  // Rows created locally, so no mutations
+  const indexes = compressRawRowsInPlaceAndMakeIndexes(rows);
   return {
     width,
     height,
@@ -287,7 +293,7 @@ export function mergeBlocksHorizontally<V>(
 }
 
 // TODO: combine into one function `makeBlockStacker`
-export function makeVerticalBlockStacker<V>(
+export function makeVerticalBlockInPlaceStacker<V>(
   isProportionalResize: ProportionalResizeGuard
 ): BlockCompositor<V> {
   return function stackBlocksVertically(blocks) {
@@ -301,14 +307,14 @@ export function makeVerticalBlockStacker<V>(
     const width = isProportionalResize(lcmWidth, maxWidth)
       ? lcmWidth
       : maxWidth;
-    const scale = makeBlockScaler<V>("width", width);
+    const scale = makeBlockInPlaceScaler<V>("width", width);
     for (let i = 0; i < blocks.length; i++) {
       scale(blocks[i]);
     }
     return mergeBlocksVertically(blocks, width);
   };
 }
-export function makeHorizontalBlockStacker<V>(
+export function makeHorizontalBlockInPlaceStacker<V>(
   isProportionalResize: ProportionalResizeGuard
 ): BlockCompositor<V> {
   return (blocks) => {
@@ -321,7 +327,7 @@ export function makeHorizontalBlockStacker<V>(
     const height = isProportionalResize(lcmHeight, maxHeight)
       ? lcmHeight
       : maxHeight;
-    const scale = makeBlockScaler<V>("height", height);
+    const scale = makeBlockInPlaceScaler<V>("height", height);
     for (let i = 0; i < blocks.length; i++) {
       scale(blocks[i]);
     }

@@ -1,12 +1,12 @@
 import { Rows } from "./core";
 
-export function shiftNumbers(columns: number[], offset: number): void {
+export function shiftPositionsInPlace(columns: number[], offset: number): void {
   for (let i = 0; i < columns.length; i++) {
     columns[i] += offset;
   }
 }
 
-export function scaleRowsVertically<V>(
+export function scaleRowsVerticallyInPlace<V>(
   { rows, indexes }: Rows<V>,
   multiplier: number
 ): void {
@@ -19,7 +19,7 @@ export function scaleRowsVertically<V>(
   }
 }
 
-export function scaleRowsHorizontally<V>(
+export function scaleRowsHorizontallyInPlace<V>(
   { rows }: Rows<V>,
   multiplier: number
 ): void {
