@@ -14,7 +14,7 @@ import {
   TableCompositor,
   ComposedTable,
 } from "./core";
-import { appendCells, prependCell, shiftColumns, shiftRows } from "./row";
+import { appendCells, prependCell, shiftNumbers, shiftRows } from "./row";
 import {
   areBlocksEqual,
   makeBlockScaler,
@@ -209,7 +209,7 @@ export function tryStackTableComponent<V>(
               ],
               columns: [
                 0,
-                ...shiftColumns(cmp.data[0].columns, opposite.width),
+                ...shiftNumbers(cmp.data[0].columns, opposite.width),
               ],
             },
             ...cmp.data.slice(1),

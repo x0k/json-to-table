@@ -11,8 +11,14 @@ import {
   ProportionalResizeGuard,
   Cells,
   RowsScaler,
+  Rows,
+  BlockTransformInPlace,
 } from "./core";
-import { scaleRowsHorizontally, scaleRowsVertically } from "./row";
+import {
+  scaleRowsHorizontally,
+  scaleRowsVertically,
+  shiftNumbers,
+} from "./row";
 
 export interface AreBlocksEqualOptions<V> {
   blocks: Block<V>[];
@@ -28,7 +34,7 @@ export function areBlocksEqual<V>({
   heightIsLcm = true,
   height,
   widthIsLcm = true,
-}: AreBlocksEqualOptions<V>) {
+}: AreBlocksEqualOptions<V>): boolean {
   const blocksRows = blocks.map((b) => {
     const wMultiplier = widthIsLcm ? width / b.width : 1;
     const hMultiplier = heightIsLcm ? height / b.height : 1;
@@ -37,10 +43,9 @@ export function areBlocksEqual<V>({
     for (let i = 0; i < rows.length; i++) {
       const index = indexes[i];
       const { cells, columns } = rows[i];
-
       for (let j = 0; j < cells.length; j++) {
         const cell = cells[j];
-        const row = i * hMultiplier;
+        const row = index * hMultiplier;
         let rowEnd = row + cell.height * hMultiplier;
         if (!heightIsLcm && rowEnd === b.height && rowEnd < height) {
           rowEnd = height;
@@ -80,32 +85,23 @@ export function areBlocksEqual<V>({
 }
 
 function applyResize<V>(
-  rows: Cells<V>[],
+  { rows }: Rows<V>,
   toResize: Map<number, Map<number, number>>,
   sizeAspect: BlockSizeAspect
-) {
-  const newRows = rows.slice();
+): void {
   for (const [rowId, cells] of toResize) {
-    const newRow = newRows[rowId].cells.slice();
+    const rowCells = rows[rowId].cells;
     for (const [cellId, diff] of cells) {
-      newRow[cellId] = {
-        ...newRow[cellId],
-        [sizeAspect]: newRow[cellId][sizeAspect] + diff,
-      };
+      rowCells[cellId][sizeAspect] += diff;
     }
-    newRows[rowId] = {
-      cells: newRow,
-      columns: newRows[rowId].columns,
-    };
   }
-  return newRows;
 }
 
 export function stretchCellsToBottom<V>({
+  data,
   height,
-  data: rows,
   width,
-}: Block<V>) {
+}: Block<V>): void {
   // TODO: Calculate yShift by row index and cell height
   const yShift = array(width, () => 0);
   const bottomPositions = new Array<
@@ -117,11 +113,12 @@ export function stretchCellsToBottom<V>({
     | null
     | undefined
   >(width);
+  const { rows } = data;
   for (let i = 0; i < rows.length; i++) {
-    const row = rows[i];
-    for (let j = 0; j < row.cells.length; j++) {
-      const cell = row.cells[j];
-      const x = row.columns[j];
+    const { cells, columns } = rows[i];
+    for (let j = 0; j < cells.length; j++) {
+      const cell = cells[j];
+      const x = columns[j];
       yShift[x] += cell.height;
       bottomPositions[x] = { cell, rowIndex: i, colIndex: j };
       for (let k = 1; k < cell.width; k++) {
@@ -144,18 +141,11 @@ export function stretchCellsToBottom<V>({
     const cells = toResize.get(position.rowIndex) || new Map<number, number>();
     toResize.set(position.rowIndex, cells.set(position.colIndex, diff));
   }
-  return {
-    height,
-    width,
-    rows: applyResize(rows, toResize, "height"),
-  };
+  console.log(toResize.size);
+  applyResize(data, toResize, "height");
 }
 
-export function stretchCellsToRight<V>({
-  height,
-  data: rows,
-  width,
-}: Block<V>) {
+export function stretchCellsToRight<V>({ data, height, width }: Block<V>) {
   const rightPositions = new Array<
     | {
         cell: Cell<V>;
@@ -164,6 +154,7 @@ export function stretchCellsToRight<V>({
       }
     | undefined
   >(height);
+  const { rows } = data;
   for (let i = 0; i < rows.length; i++) {
     const { cells, columns } = rows[i];
     if (cells.length === 0) {
@@ -200,11 +191,7 @@ export function stretchCellsToRight<V>({
     const cells = toResize.get(i) || new Map<number, number>();
     toResize.set(i, cells.set(position.indexInRow, diff));
   }
-  return {
-    height,
-    width,
-    rows: applyResize(rows, toResize, "width"),
-  };
+  applyResize(data, toResize, "width");
 }
 
 const SIZE_ASPECT_TO_ROWS_SCALER: Record<BlockSizeAspect, RowsScaler<any>> = {
@@ -214,7 +201,7 @@ const SIZE_ASPECT_TO_ROWS_SCALER: Record<BlockSizeAspect, RowsScaler<any>> = {
 
 const SIZE_ASPECT_TO_CELLS_STRETCHER: Record<
   BlockSizeAspect,
-  BlockTransform<any>
+  BlockTransformInPlace<any>
 > = {
   width: stretchCellsToRight,
   height: stretchCellsToBottom,
@@ -223,23 +210,19 @@ const SIZE_ASPECT_TO_CELLS_STRETCHER: Record<
 export function makeBlockScaler<V>(
   sizeAspect: BlockSizeAspect,
   finalSize: number
-): BlockTransform<V> {
-  const opposite = BLOCK_SIZE_ASPECT_OPPOSITES[sizeAspect];
+): BlockTransformInPlace<V> {
   const scaleRows = SIZE_ASPECT_TO_ROWS_SCALER[sizeAspect];
   const stretchCells = SIZE_ASPECT_TO_CELLS_STRETCHER[sizeAspect];
   return (table) => {
     const multiplier = Math.floor(finalSize / table[sizeAspect]);
-    const block: Block<V> = {
-      [sizeAspect as "width"]: finalSize,
-      [opposite as "height"]: table[opposite],
-      data:
-        multiplier === 1
-          ? table.data
-          : scaleRows(table.data, multiplier, finalSize),
-    };
-    return finalSize - table[sizeAspect] * multiplier === 0
-      ? block
-      : stretchCells(block);
+    if (multiplier > 1) {
+      scaleRows(table.data, multiplier);
+    }
+    let oldSize = table[sizeAspect];
+    table[sizeAspect] = finalSize;
+    if (finalSize - oldSize * multiplier > 0) {
+      stretchCells(table);
+    }
   };
 }
 
@@ -258,17 +241,26 @@ export function makeVerticalBlockStacker<V>(
       ? lcmWidth
       : maxWidth;
     const rows = new Array<Cells<V>>(0);
+    const indexes = new Array<number>(0);
+    let index = 0;
     const scale = makeBlockScaler<V>("width", width);
     for (let i = 0; i < blocks.length; i++) {
-      const finalBlock = scale(blocks[i]);
-      for (let j = 0; j < finalBlock.data.length; j++) {
-        rows.push(finalBlock.data[j]);
+      const block = blocks[i];
+      scale(block);
+      const { data, height } = block;
+      for (let j = 0; j < height; j++) {
+        indexes.push(index + data.indexes[j]);
+        rows.push(data.rows[j]);
       }
+      index += height;
     }
     return {
       width,
-      height: rows.length,
-      data: rows,
+      height: index,
+      data: {
+        rows,
+        indexes,
+      },
     };
   };
 }
@@ -286,14 +278,16 @@ export function makeHorizontalBlockStacker<V>(
     const height = isProportionalResize(lcmHeight, maxHeight)
       ? lcmHeight
       : maxHeight;
-    const finalBlocks = blocks.map(makeBlockScaler("height", height));
+    const scale = makeBlockScaler<V>("height", height);
     const rows = array(height, (): Cells<V> => ({ cells: [], columns: [] }));
     let width = 0;
-    for (let i = 0; i < finalBlocks.length; i++) {
-      const block = finalBlocks[i];
-      for (let j = 0; j < block.data.length; j++) {
+    for (let i = 0; i < blocks.length; i++) {
+      const block = blocks[i];
+      scale(block);
+      const { data } = block;
+      for (let j = 0; j < data.rows.length; j++) {
         const row = rows[j];
-        const blockRow = block.data[j];
+        const blockRow = block.data.rows[j];
         for (let k = 0; k < blockRow.cells.length; k++) {
           row.cells.push(blockRow.cells[k]);
           row.columns.push(blockRow.columns[k] + width);
@@ -301,10 +295,25 @@ export function makeHorizontalBlockStacker<V>(
       }
       width += block.width;
     }
+    const indexes = new Array<number>(height);
+    let shift = 0;
+    for (let i = 0; i < height; i++) {
+      if (rows[i].cells.length === 0) {
+        shift++;
+        continue;
+      }
+      rows[i - shift] = rows[i];
+      indexes[i - shift] = i;
+    }
+    rows.length -= shift;
+    indexes.length -= shift;
     return {
       width,
       height,
-      data: rows,
+      data: {
+        rows,
+        indexes,
+      },
     };
   };
 }

@@ -1,6 +1,6 @@
 import { Cell, Cells, Rows } from "./core";
 
-export function shiftColumns(columns: number[], offset: number): void {
+export function shiftNumbers(columns: number[], offset: number): void {
   for (let i = 0; i < columns.length; i++) {
     columns[i] += offset;
   }
@@ -11,18 +11,18 @@ export function prependCell<V>(
   cell: Cell<V>
 ): void {
   cells.unshift(cell);
-  shiftColumns(columns, cell.width);
+  shiftNumbers(columns, cell.width);
   columns.unshift(0);
 }
 
 export function shiftRows<V>({ rows }: Rows<V>, offset: number): void {
   for (let i = 0; i < rows.length; i++) {
-    shiftColumns(rows[i].columns, offset);
+    shiftNumbers(rows[i].columns, offset);
   }
 }
 
 export function appendCells<V>(a: Cells<V>, aWidth: number, b: Cells<V>): void {
-  shiftColumns(b.columns, aWidth);
+  shiftNumbers(b.columns, aWidth);
   a.cells.push(...b.cells);
   a.columns.push(...b.columns);
 }

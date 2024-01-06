@@ -50,10 +50,11 @@ export type ProportionalResizeGuard = (
 ) => boolean;
 
 export type RowsScaler<V> = (
-  rows: Cells<V>[],
+  rows: Rows<V>,
   multiplier: number,
-  finalSize: number
-) => Cells<V>[];
+) => void;
+
+export type BlockTransformInPlace<V> = (block: Block<V>) => void;
 
 export type BlockTransform<V> = (block: Block<V>) => Block<V>;
 

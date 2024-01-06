@@ -11,85 +11,91 @@ describe("stretchCellsToBottom", () => {
     const data: Block = {
       height: 2,
       width: 3,
-      data: [
-        {
-          cells: [
-            {
-              height: 1,
-              width: 1,
-              value: 1,
-              type: CellType.Value,
-            },
-            {
-              height: 1,
-              width: 1,
-              value: 2,
-              type: CellType.Value,
-            },
-            {
-              height: 1,
-              width: 1,
-              value: 3,
-              type: CellType.Value,
-            },
-          ],
-          columns: [0, 1, 2],
-        },
-        {
-          cells: [
-            {
-              height: 1,
-              width: 1,
-              value: 4,
-              type: CellType.Value,
-            },
-          ],
-          columns: [1],
-        },
-      ],
+      data: {
+        rows: [
+          {
+            cells: [
+              {
+                height: 1,
+                width: 1,
+                value: 1,
+                type: CellType.Value,
+              },
+              {
+                height: 1,
+                width: 1,
+                value: 2,
+                type: CellType.Value,
+              },
+              {
+                height: 1,
+                width: 1,
+                value: 3,
+                type: CellType.Value,
+              },
+            ],
+            columns: [0, 1, 2],
+          },
+          {
+            cells: [
+              {
+                height: 1,
+                width: 1,
+                value: 4,
+                type: CellType.Value,
+              },
+            ],
+            columns: [1],
+          },
+        ],
+        indexes: [0, 1],
+      },
     };
-    const result = stretchCellsToBottom(data);
     const expected: Block = {
       height: 2,
       width: 3,
-      data: [
-        {
-          cells: [
-            {
-              height: 2,
-              width: 1,
-              value: 1,
-              type: CellType.Value,
-            },
-            {
-              height: 1,
-              width: 1,
-              value: 2,
-              type: CellType.Value,
-            },
-            {
-              height: 2,
-              width: 1,
-              value: 3,
-              type: CellType.Value,
-            },
-          ],
-          columns: [0, 1, 2],
-        },
-        {
-          cells: [
-            {
-              height: 1,
-              width: 1,
-              value: 4,
-              type: CellType.Value,
-            },
-          ],
-          columns: [1],
-        },
-      ],
+      data: {
+        rows: [
+          {
+            cells: [
+              {
+                height: 2,
+                width: 1,
+                value: 1,
+                type: CellType.Value,
+              },
+              {
+                height: 1,
+                width: 1,
+                value: 2,
+                type: CellType.Value,
+              },
+              {
+                height: 2,
+                width: 1,
+                value: 3,
+                type: CellType.Value,
+              },
+            ],
+            columns: [0, 1, 2],
+          },
+          {
+            cells: [
+              {
+                height: 1,
+                width: 1,
+                value: 4,
+                type: CellType.Value,
+              },
+            ],
+            columns: [1],
+          },
+        ],
+        indexes: [0, 1],
+      },
     };
-    expect(result).toEqual(expected);
+    stretchCellsToBottom(data);
+    expect(data).toEqual(expected);
   });
 });
 
@@ -98,94 +104,101 @@ describe("stretchCellsToRight", () => {
     const data: Block = {
       height: 3,
       width: 2,
-      data: [
-        {
-          cells: [
-            {
-              height: 1,
-              width: 1,
-              value: 1,
-              type: CellType.Value,
-            },
-          ],
-          columns: [0],
-        },
-        {
-          cells: [
-            {
-              height: 1,
-              width: 1,
-              value: 2,
-              type: CellType.Value,
-            },
-            {
-              height: 1,
-              width: 1,
-              value: 4,
-              type: CellType.Value,
-            },
-          ],
-          columns: [0, 1],
-        },
-        {
-          cells: [
-            {
-              height: 1,
-              width: 1,
-              value: 3,
-              type: CellType.Value,
-            },
-          ],
-          columns: [0],
-        },
-      ],
+      data: {
+        rows: [
+          {
+            cells: [
+              {
+                height: 1,
+                width: 1,
+                value: 1,
+                type: CellType.Value,
+              },
+            ],
+            columns: [0],
+          },
+          {
+            cells: [
+              {
+                height: 1,
+                width: 1,
+                value: 2,
+                type: CellType.Value,
+              },
+              {
+                height: 1,
+                width: 1,
+                value: 4,
+                type: CellType.Value,
+              },
+            ],
+            columns: [0, 1],
+          },
+          {
+            cells: [
+              {
+                height: 1,
+                width: 1,
+                value: 3,
+                type: CellType.Value,
+              },
+            ],
+            columns: [0],
+          },
+        ],
+        indexes: [0, 1, 2],
+      },
     };
     const expected: Block = {
       height: 3,
       width: 2,
-      data: [
-        {
-          cells: [
-            {
-              height: 1,
-              width: 2,
-              value: 1,
-              type: CellType.Value,
-            },
-          ],
-          columns: [0],
-        },
-        {
-          cells: [
-            {
-              height: 1,
-              width: 1,
-              value: 2,
-              type: CellType.Value,
-            },
-            {
-              height: 1,
-              width: 1,
-              value: 4,
-              type: CellType.Value,
-            },
-          ],
-          columns: [0, 1],
-        },
-        {
-          cells: [
-            {
-              height: 1,
-              width: 2,
-              value: 3,
-              type: CellType.Value,
-            },
-          ],
-          columns: [0],
-        },
-      ],
+      data: {
+        rows: [
+          {
+            cells: [
+              {
+                height: 1,
+                width: 2,
+                value: 1,
+                type: CellType.Value,
+              },
+            ],
+            columns: [0],
+          },
+          {
+            cells: [
+              {
+                height: 1,
+                width: 1,
+                value: 2,
+                type: CellType.Value,
+              },
+              {
+                height: 1,
+                width: 1,
+                value: 4,
+                type: CellType.Value,
+              },
+            ],
+            columns: [0, 1],
+          },
+          {
+            cells: [
+              {
+                height: 1,
+                width: 2,
+                value: 3,
+                type: CellType.Value,
+              },
+            ],
+            columns: [0],
+          },
+        ],
+        indexes: [0, 1, 2],
+      },
     };
-    expect(stretchCellsToRight(data)).toEqual(expected);
+    stretchCellsToRight(data);
+    expect(data).toEqual(expected);
   });
 });
 
@@ -195,96 +208,91 @@ describe("makeBlockScaler", () => {
     const data: Block = {
       height: 2,
       width: 2,
-      data: [
-        {
-          cells: [
-            {
-              height: 1,
-              width: 1,
-              value: 1,
-              type: CellType.Value,
-            },
-            {
-              height: 1,
-              width: 1,
-              value: 2,
-              type: CellType.Value,
-            },
-          ],
-          columns: [0, 1],
-        },
-        {
-          cells: [
-            {
-              height: 1,
-              width: 1,
-              value: 3,
-              type: CellType.Value,
-            },
-            {
-              height: 1,
-              width: 1,
-              value: 4,
-              type: CellType.Value,
-            },
-          ],
-          columns: [0, 1],
-        },
-      ],
+      data: {
+        rows: [
+          {
+            cells: [
+              {
+                height: 1,
+                width: 1,
+                value: 1,
+                type: CellType.Value,
+              },
+              {
+                height: 1,
+                width: 1,
+                value: 2,
+                type: CellType.Value,
+              },
+            ],
+            columns: [0, 1],
+          },
+          {
+            cells: [
+              {
+                height: 1,
+                width: 1,
+                value: 3,
+                type: CellType.Value,
+              },
+              {
+                height: 1,
+                width: 1,
+                value: 4,
+                type: CellType.Value,
+              },
+            ],
+            columns: [0, 1],
+          },
+        ],
+        indexes: [0, 1],
+      },
     };
     const expected: Block = {
       height: 5,
       width: 2,
-      data: [
-        {
-          cells: [
-            {
-              height: 2,
-              width: 1,
-              value: 1,
-              type: CellType.Value,
-            },
-            {
-              height: 2,
-              width: 1,
-              value: 2,
-              type: CellType.Value,
-            },
-          ],
-          columns: [0, 1],
-        },
-        {
-          cells: [],
-          columns: [],
-        },
-        {
-          cells: [
-            {
-              height: 3,
-              width: 1,
-              value: 3,
-              type: CellType.Value,
-            },
-            {
-              height: 3,
-              width: 1,
-              value: 4,
-              type: CellType.Value,
-            },
-          ],
-          columns: [0, 1],
-        },
-        {
-          cells: [],
-          columns: [],
-        },
-        {
-          cells: [],
-          columns: [],
-        },
-      ],
+      data: {
+        rows: [
+          {
+            cells: [
+              {
+                height: 2,
+                width: 1,
+                value: 1,
+                type: CellType.Value,
+              },
+              {
+                height: 2,
+                width: 1,
+                value: 2,
+                type: CellType.Value,
+              },
+            ],
+            columns: [0, 1],
+          },
+          {
+            cells: [
+              {
+                height: 3,
+                width: 1,
+                value: 3,
+                type: CellType.Value,
+              },
+              {
+                height: 3,
+                width: 1,
+                value: 4,
+                type: CellType.Value,
+              },
+            ],
+            columns: [0, 1],
+          },
+        ],
+        indexes: [0, 2],
+      },
     };
-    expect(scale(data)).toEqual(expected);
+    scale(data);
+    expect(data).toEqual(expected);
   });
 });
 
@@ -296,48 +304,54 @@ describe("areBlocksEqual", () => {
           {
             height: 1,
             width: 2,
-            data: [
-              {
-                cells: [
-                  {
-                    height: 1,
-                    width: 1,
-                    value: 1,
-                    type: CellType.Value,
-                  },
-                  {
-                    height: 1,
-                    width: 1,
-                    value: 2,
-                    type: CellType.Value,
-                  },
-                ],
-                columns: [0, 1],
-              },
-            ],
+            data: {
+              rows: [
+                {
+                  cells: [
+                    {
+                      height: 1,
+                      width: 1,
+                      value: 1,
+                      type: CellType.Value,
+                    },
+                    {
+                      height: 1,
+                      width: 1,
+                      value: 2,
+                      type: CellType.Value,
+                    },
+                  ],
+                  columns: [0, 1],
+                },
+              ],
+              indexes: [0],
+            },
           },
           {
             height: 2,
             width: 4,
-            data: [
-              {
-                cells: [
-                  {
-                    height: 2,
-                    width: 2,
-                    value: 1,
-                    type: CellType.Value,
-                  },
-                  {
-                    height: 2,
-                    width: 2,
-                    value: 2,
-                    type: CellType.Value,
-                  },
-                ],
-                columns: [0, 2],
-              },
-            ],
+            data: {
+              rows: [
+                {
+                  cells: [
+                    {
+                      height: 2,
+                      width: 2,
+                      value: 1,
+                      type: CellType.Value,
+                    },
+                    {
+                      height: 2,
+                      width: 2,
+                      value: 2,
+                      type: CellType.Value,
+                    },
+                  ],
+                  columns: [0, 2],
+                },
+              ],
+              indexes: [0],
+            },
           },
         ],
         height: 2,
@@ -353,54 +367,60 @@ describe("areBlocksEqual", () => {
           {
             height: 1,
             width: 2,
-            data: [
-              {
-                cells: [
-                  {
-                    height: 1,
-                    width: 1,
-                    value: 1,
-                    type: CellType.Value,
-                  },
-                  {
-                    height: 1,
-                    width: 1,
-                    value: 2,
-                    type: CellType.Value,
-                  },
-                ],
-                columns: [0, 1],
-              },
-            ],
+            data: {
+              rows: [
+                {
+                  cells: [
+                    {
+                      height: 1,
+                      width: 1,
+                      value: 1,
+                      type: CellType.Value,
+                    },
+                    {
+                      height: 1,
+                      width: 1,
+                      value: 2,
+                      type: CellType.Value,
+                    },
+                  ],
+                  columns: [0, 1],
+                },
+              ],
+              indexes: [0],
+            },
           },
           {
             height: 1,
             width: 3,
-            data: [
-              {
-                cells: [
-                  {
-                    height: 1,
-                    width: 1,
-                    value: 1,
-                    type: CellType.Value,
-                  },
-                  {
-                    height: 1,
-                    width: 1,
-                    value: 2,
-                    type: CellType.Value,
-                  },
-                  {
-                    height: 1,
-                    width: 1,
-                    value: 3,
-                    type: CellType.Value,
-                  },
-                ],
-                columns: [0, 1, 2],
-              },
-            ],
+            data: {
+              rows: [
+                {
+                  cells: [
+                    {
+                      height: 1,
+                      width: 1,
+                      value: 1,
+                      type: CellType.Value,
+                    },
+                    {
+                      height: 1,
+                      width: 1,
+                      value: 2,
+                      type: CellType.Value,
+                    },
+                    {
+                      height: 1,
+                      width: 1,
+                      value: 3,
+                      type: CellType.Value,
+                    },
+                  ],
+                  columns: [0, 1, 2],
+                },
+              ],
+              indexes: [0],
+            },
           },
         ],
         width: 6,
@@ -408,7 +428,7 @@ describe("areBlocksEqual", () => {
       })
     ).toBe(false);
   });
-  
+
   it("Should return true for equal blocks with different sizes", () => {
     expect(
       areBlocksEqual({
@@ -416,48 +436,54 @@ describe("areBlocksEqual", () => {
           {
             height: 1,
             width: 2,
-            data: [
-              {
-                cells: [
-                  {
-                    height: 1,
-                    width: 1,
-                    value: 1,
-                    type: CellType.Value,
-                  },
-                  {
-                    height: 1,
-                    width: 1,
-                    value: 2,
-                    type: CellType.Value,
-                  },
-                ],
-                columns: [0, 1],
-              },
-            ],
+            data: {
+              rows: [
+                {
+                  cells: [
+                    {
+                      height: 1,
+                      width: 1,
+                      value: 1,
+                      type: CellType.Value,
+                    },
+                    {
+                      height: 1,
+                      width: 1,
+                      value: 2,
+                      type: CellType.Value,
+                    },
+                  ],
+                  columns: [0, 1],
+                },
+              ],
+              indexes: [0],
+            },
           },
           {
             height: 1,
             width: 3,
-            data: [
-              {
-                cells: [
-                  {
-                    height: 1,
-                    width: 1,
-                    value: 1,
-                    type: CellType.Value,
-                  },
-                  {
-                    height: 1,
-                    width: 2,
-                    value: 2,
-                    type: CellType.Value,
-                  },
-                ],
-                columns: [0, 1],
-              },
-            ],
+            data: {
+              rows: [
+                {
+                  cells: [
+                    {
+                      height: 1,
+                      width: 1,
+                      value: 1,
+                      type: CellType.Value,
+                    },
+                    {
+                      height: 1,
+                      width: 2,
+                      value: 2,
+                      type: CellType.Value,
+                    },
+                  ],
+                  columns: [0, 1],
+                },
+              ],
+              indexes: [0],
+            },
           },
         ],
         width: 3,
