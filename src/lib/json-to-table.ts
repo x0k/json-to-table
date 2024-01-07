@@ -66,7 +66,7 @@ export function makeTableFactory({
       for (let i = 0; i < rows.length; i++) {
         const rawRow = rows[i];
         const index = indexes[i];
-        if (index > h) {
+        if (index >= h) {
           h += baked[++blockIndex].height;
         }
         const title = titles[blockIndex];
