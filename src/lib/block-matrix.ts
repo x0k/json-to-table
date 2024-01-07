@@ -12,7 +12,7 @@ import {
 const UNDEFINED_CELL = Symbol("undefined cell");
 
 export function createMatrix<T, R>(
-  { height, width, data: rows }: Block<T>,
+  { height, width, data }: Block<T>,
   getValue: (
     cell: Cell<T>,
     rowIndex: number,
@@ -25,9 +25,9 @@ export function createMatrix<T, R>(
     width,
     () => UNDEFINED_CELL
   );
-  for (let i = 0; i < rows.rows.length; i++) {
-    const row = rows.rows[i];
-    const index = rows.indexes[i];
+  for (let i = 0; i < data.rows.length; i++) {
+    const row = data.rows[i];
+    const index = data.indexes[i];
     for (let j = 0; j < row.cells.length; j++) {
       const cell = row.cells[j];
       const col = row.columns[j];

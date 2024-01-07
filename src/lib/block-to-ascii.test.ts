@@ -18,19 +18,22 @@ describe("blockToASCII", () => {
     const table: Block = {
       width: 1,
       height: 1,
-      data: [
-        {
-          cells: [
-            {
-              type: CellType.Value,
-              height: 1,
-              width: 1,
-              value: "a",
-            },
-          ],
-          columns: [0],
-        },
-      ],
+      data: {
+        rows: [
+          {
+            cells: [
+              {
+                type: CellType.Value,
+                height: 1,
+                width: 1,
+                value: "a",
+              },
+            ],
+            columns: [0],
+          },
+        ],
+        indexes: [0],
+      },
     };
     const ascii = blockToASCII(table);
     expect(`\n${ascii}`).toBe(
@@ -44,19 +47,22 @@ describe("blockToASCII", () => {
     const table: Block = {
       width: 1,
       height: 1,
-      data: [
-        {
-          cells: [
-            {
-              type: CellType.Value,
-              height: 1,
-              width: 1,
-              value: "a",
-            },
-          ],
-          columns: [0],
-        },
-      ],
+      data: {
+        rows: [
+          {
+            cells: [
+              {
+                type: CellType.Value,
+                height: 1,
+                width: 1,
+                value: "a",
+              },
+            ],
+            columns: [0],
+          },
+        ],
+        indexes: [0],
+      },
     };
     const ascii = blockToASCII(table, {
       format: ASCIITableFormat.MarkdownLike,
