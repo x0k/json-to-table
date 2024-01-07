@@ -110,7 +110,6 @@ describe("makeTableFactory", () => {
   it("Should deduplicate table indexes", () => {
     const table = factory(simpleIndexesDeduplication);
     const ascii = blockToASCII(bake(table));
-    console.log(ascii);
     expect(`\n${ascii}\n`).toBe(`
 +---+---+---+---+
 | № | a | b | c |

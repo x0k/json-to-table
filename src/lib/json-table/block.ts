@@ -12,7 +12,10 @@ import {
   Rows,
   BlockTransformInPlace,
 } from "./core";
-import { scaleRowsHorizontallyInPlace, scaleRowsVerticallyInPlace } from "./row";
+import {
+  scaleRowsHorizontallyInPlace,
+  scaleRowsVerticallyInPlace,
+} from "./row";
 
 export interface AreBlocksEqualOptions<V> {
   blocks: Block<V>[];
@@ -138,7 +141,11 @@ export function stretchCellsToBottomInPlace<V>({
   applyResizeInPlace(data, toResize, "height");
 }
 
-export function stretchCellsToRightInPlace<V>({ data, height, width }: Block<V>) {
+export function stretchCellsToRightInPlace<V>({
+  data,
+  height,
+  width,
+}: Block<V>) {
   const rightPositions = new Array<
     | {
         cell: Cell<V>;
@@ -169,7 +176,7 @@ export function stretchCellsToRightInPlace<V>({ data, height, width }: Block<V>)
       }
     }
   }
-// TODO: this algorithm can be implemented without `set` of cells
+  // TODO: this algorithm can be implemented without `set` of cells
   const addedToResize = new Set<Cell<V>>();
   const toResize = new Map<number, Map<number, number>>();
   for (let i = 0; i < rows.length; i++) {
@@ -189,7 +196,10 @@ export function stretchCellsToRightInPlace<V>({ data, height, width }: Block<V>)
   applyResizeInPlace(data, toResize, "width");
 }
 
-const SIZE_ASPECT_TO_ROWS_IN_PLACE_SCALER: Record<BlockSizeAspect, RowsScaler<any>> = {
+const SIZE_ASPECT_TO_ROWS_IN_PLACE_SCALER: Record<
+  BlockSizeAspect,
+  RowsScaler<any>
+> = {
   width: scaleRowsHorizontallyInPlace,
   height: scaleRowsVerticallyInPlace,
 };
@@ -207,7 +217,8 @@ export function makeBlockInPlaceScaler<V>(
   finalSize: number
 ): BlockTransformInPlace<V> {
   const scaleRowsInPlace = SIZE_ASPECT_TO_ROWS_IN_PLACE_SCALER[sizeAspect];
-  const stretchCellsInPlace = SIZE_ASPECT_TO_CELLS_IN_PLACE_STRETCHER[sizeAspect];
+  const stretchCellsInPlace =
+    SIZE_ASPECT_TO_CELLS_IN_PLACE_STRETCHER[sizeAspect];
   return (table) => {
     const multiplier = Math.floor(finalSize / table[sizeAspect]);
     if (multiplier > 1) {
@@ -231,7 +242,7 @@ export function mergeBlocksVertically<V>(
   let index = 0;
   for (let i = 0; i < blocks.length; i++) {
     const { data, height } = blocks[i];
-    for (let j = 0; j < height; j++) {
+    for (let j = 0; j < data.rows.length; j++) {
       indexes.push(index + data.indexes[j]);
       rows.push(data.rows[j]);
     }
@@ -244,7 +255,9 @@ export function mergeBlocksVertically<V>(
   };
 }
 
-export function compressRawRowsInPlaceAndMakeIndexes<V>(rows: Cells<V>[]): number[] {
+export function compressRawRowsInPlaceAndMakeIndexes<V>(
+  rows: Cells<V>[]
+): number[] {
   const indexes = new Array<number>(rows.length);
   let shift = 0;
   for (let i = 0; i < rows.length; i++) {
@@ -264,30 +277,30 @@ export function mergeBlocksHorizontally<V>(
   blocks: Block<V>[],
   height: number
 ): Block<V> {
-  const rows = array(height, (): Cells<V> => ({ cells: [], columns: [] }));
+  const newRows = array(height, (): Cells<V> => ({ cells: [], columns: [] }));
   let width = 0;
   for (let i = 0; i < blocks.length; i++) {
     const {
-      data: { rows: blockRows },
+      data: { rows, indexes },
       width: blockWidth,
     } = blocks[i];
-    for (let j = 0; j < blockRows.length; j++) {
-      const row = rows[j];
-      const blockRow = blockRows[j];
-      for (let k = 0; k < blockRow.cells.length; k++) {
-        row.cells.push(blockRow.cells[k]);
-        row.columns.push(blockRow.columns[k] + width);
+    for (let j = 0; j < rows.length; j++) {
+      const { cells, columns } = rows[j];
+      const row = newRows[indexes[j]];
+      for (let k = 0; k < cells.length; k++) {
+        row.cells.push(cells[k]);
+        row.columns.push(columns[k] + width);
       }
     }
     width += blockWidth;
   }
   // Rows created locally, so no mutations
-  const indexes = compressRawRowsInPlaceAndMakeIndexes(rows);
+  const indexes = compressRawRowsInPlaceAndMakeIndexes(newRows);
   return {
     width,
     height,
     data: {
-      rows,
+      rows: newRows,
       indexes,
     },
   };

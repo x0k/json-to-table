@@ -25,7 +25,7 @@ export function createMatrix<T, R>(
     width,
     () => UNDEFINED_CELL
   );
-  for (let i = 0; i < height; i++) {
+  for (let i = 0; i < rows.rows.length; i++) {
     const row = rows.rows[i];
     const index = rows.indexes[i];
     for (let j = 0; j < row.cells.length; j++) {
