@@ -9,6 +9,7 @@ import parsingError from "./__fixtures__/parsing-error.json";
 import differentHeaders from "./__fixtures__/different-headers.json";
 import uniqueHeaders from "./__fixtures__/uniq-headers.json";
 import wrongSizes from "./__fixtures__/wrong-sizes.json";
+import emptyArrays from "./__fixtures__/empty-arrays.json"
 
 describe("makeTableFactory", () => {
   const cornerCellValue = "№";
@@ -221,5 +222,10 @@ describe("makeTableFactory", () => {
 |   |   |   | 4 | 5 |
 +---+---+---+---+---+
 `);
+  })
+  it('Should handle empty arrays', () => {
+    const table = factory(emptyArrays);
+    const ascii = blockToASCII(bake(table));
+    console.log(ascii);
   })
 });
