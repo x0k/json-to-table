@@ -49,5 +49,5 @@ Output:
 
 ## See also
 
-- Use this app to render JSON responses as tables in your browser [WebMaid](https://github.com/x0k/web-maid#examples)
+- Use this app to render JSON responses as tables in your browser by [WebMaid](https://github.com/x0k/web-maid/tree/main/examples/json-to-table)
 - Simple build automation tool [mk](https://github.com/x0k/mk)
