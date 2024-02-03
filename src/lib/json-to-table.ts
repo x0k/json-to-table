@@ -199,6 +199,9 @@ export function makeTableFactory({
         const stabilize = makeObjectPropertiesStabilizer();
         return transformArray(value as JSONRecord[], (value) => {
           const [keys, values] = stabilize(value);
+          if (keys.length === 0) {
+            return EMPTY;
+          }
           return stackTablesHorizontal(keys, values.map(transformValue));
         });
       }
