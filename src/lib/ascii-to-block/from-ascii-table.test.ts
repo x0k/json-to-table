@@ -12,7 +12,7 @@ describe("fromASCIITable", () => {
 +---+
 `,
       getSimpleMySqlASCIITableSeparatorType
-    ).rows[0].cells[0];
+    ).data.rows[0].cells[0];
     expect(value).toBe("a");
   });
 

@@ -5,9 +5,13 @@ import { escapeHtml } from "@/lib/html";
 export const HTML_TABLE_STYLES = `table, th, td {border: 1px solid black; border-collapse: collapse;} th, td {padding: 5px; text-align: left;} th:has(> b), td:has(> b) {text-align: center;}`;
 
 export function renderTable(model: Block) {
-  return `<table>${model.rows
-    .map(
-      (row) =>
+  const rows: string[] = [];
+  let r = 0;
+  let index = model.data.indexes[r];
+  for (let i = 0; i < model.height; i++) {
+    if (i === index) {
+      const row = model.data.rows[r];
+      rows.push(
         `<tr>${row.cells
           .map((cell) => {
             const val =
@@ -19,8 +23,13 @@ export function renderTable(model: Block) {
             }</td>`;
           })
           .join("\n")}</tr>`
-    )
-    .join("\n")}</table>`;
+      );
+      index = model.data.indexes[++r];
+    } else {
+      rows.push(`<tr></tr>`);
+    }
+  }
+  return `<table>${rows.join("\n")}</table>`;
 }
 
 export function makeHTMLPageContent(tables: Entry<Block>[]) {

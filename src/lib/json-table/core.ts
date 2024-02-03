@@ -22,14 +22,20 @@ export interface Cell<V = JSONPrimitiveOrNull> extends Sized {
   type: CellType;
 }
 
-export interface Row<V = JSONPrimitiveOrNull> {
+export interface Cells<V = JSONPrimitiveOrNull> {
   cells: Cell<V>[];
   /** Absolute position in row for each cell */
   columns: number[];
 }
 
+export interface Rows<V = JSONPrimitiveOrNull> {
+  rows: Cells<V>[];
+  /** Absolute position in column for each row */
+  indexes: number[];
+}
+
 export interface Block<V = JSONPrimitiveOrNull> extends Sized {
-  rows: Row<V>[];
+  data: Rows<V>;
 }
 
 export interface Table<V = JSONPrimitiveOrNull> {
@@ -44,10 +50,11 @@ export type ProportionalResizeGuard = (
 ) => boolean;
 
 export type RowsScaler<V> = (
-  rows: Row<V>[],
+  rows: Rows<V>,
   multiplier: number,
-  finalSize: number
-) => Row<V>[];
+) => void;
+
+export type BlockTransformInPlace<V> = (block: Block<V>) => void;
 
 export type BlockTransform<V> = (block: Block<V>) => Block<V>;
 
@@ -91,12 +98,15 @@ export function makeTableFromValue<V>(value: V): Table<V> {
     body: {
       height: 1,
       width: 1,
-      rows: [
-        {
-          cells: [{ height: 1, width: 1, value, type: CellType.Value }],
-          columns: [0],
-        },
-      ],
+      data: {
+        rows: [
+          {
+            cells: [{ height: 1, width: 1, value, type: CellType.Value }],
+            columns: [0],
+          },
+        ],
+        indexes: [0],
+      },
     },
   };
 }

@@ -1,4 +1,4 @@
-import { Block, CellType, Table } from "@/lib/json-table";
+import { Block, CellType } from "@/lib/json-table";
 import { max, sum } from "@/lib/math";
 
 import { calculateSheetData } from "./block-to-xlsx";
@@ -9,77 +9,80 @@ describe("json-table-xlsx", () => {
       const table: Block = {
         width: 4,
         height: 3,
-        rows: [
-          {
-            cells: [
-              {
-                height: 1,
-                width: 1,
-                value: "a",
-                type: CellType.Header,
-              },
-              {
-                height: 1,
-                width: 1,
-                value: "b",
-                type: CellType.Header,
-              },
-              {
-                height: 1,
-                width: 2,
-                value: "c",
-                type: CellType.Header,
-              },
-            ],
-            columns: [0, 1, 2],
-          },
-          {
-            cells: [
-              {
-                height: 2,
-                width: 1,
-                value: 1,
-                type: CellType.Value,
-              },
-              {
-                height: 2,
-                width: 1,
-                value: 2,
-                type: CellType.Value,
-              },
-              {
-                height: 1,
-                width: 1,
-                value: "aa",
-                type: CellType.Header,
-              },
-              {
-                height: 1,
-                width: 1,
-                value: "bb",
-                type: CellType.Header,
-              },
-            ],
-            columns: [0, 1, 2, 3],
-          },
-          {
-            cells: [
-              {
-                height: 1,
-                width: 1,
-                value: 11,
-                type: CellType.Value,
-              },
-              {
-                height: 1,
-                width: 1,
-                value: 22,
-                type: CellType.Value,
-              },
-            ],
-            columns: [2, 3],
-          },
-        ],
+        data: {
+          rows: [
+            {
+              cells: [
+                {
+                  height: 1,
+                  width: 1,
+                  value: "a",
+                  type: CellType.Header,
+                },
+                {
+                  height: 1,
+                  width: 1,
+                  value: "b",
+                  type: CellType.Header,
+                },
+                {
+                  height: 1,
+                  width: 2,
+                  value: "c",
+                  type: CellType.Header,
+                },
+              ],
+              columns: [0, 1, 2],
+            },
+            {
+              cells: [
+                {
+                  height: 2,
+                  width: 1,
+                  value: 1,
+                  type: CellType.Value,
+                },
+                {
+                  height: 2,
+                  width: 1,
+                  value: 2,
+                  type: CellType.Value,
+                },
+                {
+                  height: 1,
+                  width: 1,
+                  value: "aa",
+                  type: CellType.Header,
+                },
+                {
+                  height: 1,
+                  width: 1,
+                  value: "bb",
+                  type: CellType.Header,
+                },
+              ],
+              columns: [0, 1, 2, 3],
+            },
+            {
+              cells: [
+                {
+                  height: 1,
+                  width: 1,
+                  value: 11,
+                  type: CellType.Value,
+                },
+                {
+                  height: 1,
+                  width: 1,
+                  value: 22,
+                  type: CellType.Value,
+                },
+              ],
+              columns: [2, 3],
+            },
+          ],
+          indexes: [0, 1, 2],
+        },
       };
       const expected = {
         widths: [8, 8, 8, 8],

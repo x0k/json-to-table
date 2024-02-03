@@ -10,7 +10,7 @@ import {
   isJsonPrimitiveOrNull,
 } from "@/lib/json";
 import { JSONParseStatus, jsonTryParse } from "@/lib/json-parser";
-import { Block, makeTableBaker } from "@/lib/json-table";
+import { Block, makeTableInPlaceBaker } from "@/lib/json-table";
 import { makeTableFactory } from "@/lib/json-to-table";
 import { max, sum } from "@/lib/math";
 
@@ -37,7 +37,7 @@ export async function createTable(
   const options = extractTableFactoryOptions(transformConfig);
   const tableTransformer = makeTableFactory(options);
   const transformApplicator = makeTransformApplicator(transformConfig);
-  const bakeTable = makeTableBaker<JSONPrimitiveOrNull>({
+  const bakeTable = makeTableInPlaceBaker<JSONPrimitiveOrNull>({
     cornerCellValue: options.cornerCellValue,
     head: true,
     indexes: true,

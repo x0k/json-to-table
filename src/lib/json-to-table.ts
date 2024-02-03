@@ -6,13 +6,15 @@ import {
 } from "@/lib/json";
 import {
   Table,
-  Row,
+  Cells,
   makeTableFromValue,
   makeProportionalResizeGuard,
   ComposedTable,
   CellType,
-  shiftColumns,
-  makeTableStacker,
+  shiftPositionsInPlace,
+  makeTableInPlaceStacker,
+  mergeBlocksHorizontally,
+  Block,
 } from "@/lib/json-table";
 import { isRecord } from "@/lib/guards";
 import { array } from "@/lib/array";
@@ -29,8 +31,6 @@ export interface TableFactoryOptions<V> {
   stabilizeOrderOfPropertiesInArraysOfObjects?: boolean;
 }
 
-const EMPTY = makeTableFromValue("");
-
 export function makeTableFactory({
   combineArraysOfObjects,
   joinPrimitiveArrayValues,
@@ -42,91 +42,72 @@ export function makeTableFactory({
   const isProportionalResize = makeProportionalResizeGuard(
     proportionalSizeAdjustmentThreshold
   );
-  const verticalTableStacker = makeTableStacker({
+  const verticalTableInPlaceStacker = makeTableInPlaceStacker({
     deduplicationComponent: "head",
     isProportionalResize,
     cornerCellValue,
   });
-  const horizontalTableStacker = makeTableStacker({
+  const horizontalTableInPlaceStacker = makeTableInPlaceStacker({
     deduplicationComponent: "indexes",
     isProportionalResize,
     cornerCellValue,
   });
 
-  function addIndexes(
-    { baked, body, head, indexes }: ComposedTable,
-    titles: string[]
-  ): Table {
-    const hasIndexes = indexes !== null;
+  function addIndexesInPlace(table: ComposedTable, titles: string[]): void {
+    const { baked, indexes: indexesBlock } = table;
+    const hasIndexes = indexesBlock !== null;
     const collapse = hasIndexes && collapseIndexes;
-    const indexesRows = hasIndexes
-      ? indexes.rows.slice()
-      : array(body.height, () => ({
-          cells: [],
-          columns: [],
-        }));
-    let h = 0;
-    for (let i = 0; i < baked.length; i++) {
-      const height = baked[i].height;
-      if (collapse) {
-        let y = 0;
-        while (y < height) {
-          const hy = h + y;
-          const cells = indexesRows[hy].cells;
-          indexesRows[hy] = {
-            cells: [
-              {
-                ...cells[0],
-                value: `${titles[i]}.${cells[0].value}`,
-              },
-              ...cells.slice(1),
-            ],
-            columns: indexesRows[hy].columns,
-          };
-          y += cells[0].height;
+    if (collapse) {
+      let blockIndex = 0;
+      let h = baked[0].height;
+      const { rows, indexes } = indexesBlock.data;
+      for (let i = 0; i < rows.length; i++) {
+        const rawRow = rows[i];
+        const index = indexes[i];
+        if (index >= h) {
+          h += baked[++blockIndex].height;
         }
-      } else {
-        indexesRows[h] = {
-          cells: [
-            {
-              height,
-              width: 1,
-              value: titles[i],
-              type: CellType.Index,
-            },
-            ...indexesRows[h].cells,
-          ],
-          columns: [0, ...shiftColumns(indexesRows[h].columns, 1)],
-        };
-        if (hasIndexes) {
-          for (let j = 1; j < height; j++) {
-            const hj = h + j;
-            indexesRows[hj] = {
-              cells: indexesRows[hj].cells,
-              columns: shiftColumns(indexesRows[hj].columns, 1),
-            };
-          }
-        }
+        const title = titles[blockIndex];
+        rawRow.cells[0].value = `${title}.${rawRow.cells[0].value}`;
       }
-      h += height;
+      return;
     }
-    return {
-      head,
-      body,
-      indexes: {
-        rows: indexesRows,
-        width: hasIndexes ? indexes.width + Number(!collapseIndexes) : 1,
-        height: h,
+    const rawRows = array<Cells>(baked.length, () => ({
+      cells: [],
+      columns: [],
+    }));
+    const idx = new Array<number>(0);
+    let index = 0;
+    for (let i = 0; i < baked.length; i++) {
+      const rawRow = rawRows[i];
+      const { height } = baked[i];
+      rawRow.cells.push({
+        height: height,
+        width: 1,
+        value: titles[i],
+        type: CellType.Index,
+      });
+      rawRow.columns.push(0);
+      idx.push(index);
+      index += height;
+    }
+    const newIndexes: Block = {
+      height: index,
+      width: 1,
+      data: {
+        rows: rawRows,
+        indexes: idx,
       },
     };
+    table.indexes = hasIndexes
+      ? mergeBlocksHorizontally([newIndexes, indexesBlock], index)
+      : newIndexes;
   }
 
-  function addHeaders(
-    { baked, body, head, indexes }: ComposedTable,
-    titles: string[]
-  ): Table {
+  function addHeaders(table: ComposedTable, titles: string[]): void {
+    const { baked, head } = table;
     const hasHeaders = head !== null;
-    const newHead: Row = {
+    const newHead: Cells = {
       cells: [],
       columns: [],
     };
@@ -142,29 +123,36 @@ export function makeTableFactory({
       newHead.columns.push(w);
       w += width;
     }
-    return {
-      head: {
-        rows: hasHeaders ? [newHead, ...head.rows] : [newHead],
-        width: w,
-        height: hasHeaders ? head.height + 1 : 1,
-      },
-      body,
-      indexes,
+    if (hasHeaders) {
+      head.data.rows.unshift(newHead);
+      shiftPositionsInPlace(head.data.indexes, 1);
+      head.data.indexes.unshift(0);
+    }
+    table.head = {
+      width: w,
+      height: hasHeaders ? head.height + 1 : 1,
+      data: hasHeaders ? head.data : { rows: [newHead], indexes: [0] },
     };
   }
 
   function stackTablesVertical(titles: string[], tables: Table[]): Table {
-    const stacked = verticalTableStacker(tables);
-    return addIndexes(stacked, titles);
+    const stacked = verticalTableInPlaceStacker(tables);
+    addIndexesInPlace(stacked, titles);
+    // @ts-expect-error transform to regular table
+    delete stacked.baked;
+    return stacked;
   }
   function stackTablesHorizontal(titles: string[], tables: Table[]): Table {
-    const stacked = horizontalTableStacker(tables);
-    return addHeaders(stacked, titles);
+    const stacked = horizontalTableInPlaceStacker(tables);
+    addHeaders(stacked, titles);
+    // @ts-expect-error transform to regular table
+    delete stacked.baked;
+    return stacked;
   }
   function transformRecord(record: Record<string, JSONValue>): Table {
     const keys = Object.keys(record);
     if (keys.length === 0) {
-      return EMPTY;
+      return makeTableFromValue("");
     }
     return stackTablesHorizontal(
       keys,
@@ -189,7 +177,7 @@ export function makeTableFactory({
     }
     if (Array.isArray(value)) {
       if (value.length === 0) {
-        return EMPTY;
+        return makeTableFromValue("");
       }
       let isPrimitives = true;
       let isRecords = true;
@@ -205,13 +193,13 @@ export function makeTableFactory({
       if (combineArraysOfObjects && isRecords) {
         return transformRecord(Object.assign({}, ...value));
       }
-      if (
-        stabilizeOrderOfPropertiesInArraysOfObjects &&
-        isRecords
-      ) {
+      if (stabilizeOrderOfPropertiesInArraysOfObjects && isRecords) {
         const stabilize = makeObjectPropertiesStabilizer();
         return transformArray(value as JSONRecord[], (value) => {
           const [keys, values] = stabilize(value);
+          if (keys.length === 0) {
+            return makeTableFromValue("");
+          }
           return stackTablesHorizontal(keys, values.map(transformValue));
         });
       }

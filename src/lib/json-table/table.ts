@@ -1,4 +1,3 @@
-import { array } from "@/lib/array";
 import { lcm, max } from "@/lib/math";
 
 import {
@@ -6,7 +5,6 @@ import {
   BlockCompositor,
   CellType,
   ProportionalResizeGuard,
-  Row,
   TABLE_COMPONENT_SIZE_ASPECTS,
   TABLE_COMPONENT_OPPOSITES,
   Table,
@@ -14,12 +12,14 @@ import {
   TableCompositor,
   ComposedTable,
 } from "./core";
-import { concatRows, rowPrepend, shiftColumns, shiftRows } from "./row";
+import { shiftPositionsInPlace } from "./row";
 import {
   areBlocksEqual,
-  makeBlockScaler,
-  makeHorizontalBlockStacker,
-  makeVerticalBlockStacker,
+  makeBlockInPlaceScaler,
+  makeHorizontalBlockInPlaceStacker,
+  makeVerticalBlockInPlaceStacker,
+  mergeBlocksHorizontally,
+  mergeBlocksVertically,
 } from "./block";
 
 export interface BakeOptions<V> {
@@ -95,7 +95,7 @@ export function tryDeduplicateComponent<V>(
   return bestCmp;
 }
 
-export function makeTableBaker<V>({
+export function makeTableInPlaceBaker<V>({
   head: bakeHead,
   indexes: bakeIndexes,
   cornerCellValue,
@@ -106,52 +106,37 @@ export function makeTableBaker<V>({
     }
     const useHead = bakeHead && head !== null;
     const useIndexes = bakeIndexes && indexes !== null;
-    const withIndexesRows = useIndexes
-      ? indexes.rows.map((row, i) =>
-          concatRows(row, indexes.width, body.rows[i])
-        )
-      : body.rows;
+    const withIndexes = useIndexes
+      ? mergeBlocksHorizontally([indexes, body], body.height)
+      : body;
     const width = body.width + (useIndexes ? indexes.width : 0);
     if (!useHead) {
-      return {
-        height: body.height,
-        width,
-        rows: withIndexesRows,
-      };
+      return withIndexes;
     }
-    const height = body.height + head.height;
     if (!useIndexes) {
-      return {
-        height,
-        width,
-        rows: head.rows.concat(withIndexesRows),
-      };
+      return mergeBlocksVertically([head, withIndexes], width);
     }
-    const firstHeadRow = head.rows[0];
-    const rows: Row<V>[] = [
-      rowPrepend(firstHeadRow, {
-        height: head.height,
-        width: indexes.width,
-        value: cornerCellValue,
-        type: CellType.Corner,
-      }),
-      ...shiftRows(head.rows.slice(1), indexes.width),
-      ...withIndexesRows,
-    ];
-    return {
-      height,
-      width,
-      rows,
-    };
+    // TODO: factor out `prependCell(Block, Cell)` ?
+    for (let i = 0; i < head.data.rows.length; i++) {
+      shiftPositionsInPlace(head.data.rows[i].columns, indexes.width);
+    }
+    const firstHeadRow = head.data.rows[0];
+    firstHeadRow.cells.unshift({
+      height: head.height,
+      width: indexes.width,
+      value: cornerCellValue,
+      type: CellType.Corner,
+    });
+    firstHeadRow.columns.unshift(0);
+    return mergeBlocksVertically([head, withIndexes], width);
   };
 }
 
-export function tryStackTableComponent<V>(
+export function tryPrepareTablesToStack<V>(
   tables: Table<V>[],
   component: TableComponent,
   bake: boolean,
-  cornerCellValue: V,
-  compose: BlockCompositor<V>
+  cornerCellValue: V
 ) {
   const blocks: Block<V>[] = [];
   for (let i = 0; i < tables.length; i++) {
@@ -168,59 +153,68 @@ export function tryStackTableComponent<V>(
       continue;
     }
     switch (component) {
-      case "indexes":
+      case "indexes": {
+        const shifted = cmp.data.indexes.slice();
+        // mutation of local copy
+        shiftPositionsInPlace(shifted, opposite.height);
+        shifted.unshift(0);
         blocks.push({
           height: cmp.height + opposite.height,
           width: cmp.width,
-          rows: [
-            {
-              cells: [
-                {
-                  height: opposite.height,
-                  width: cmp.width,
-                  value: cornerCellValue,
-                  type: CellType.Corner,
-                },
-              ],
-              columns: [0],
-            },
-            ...array(opposite.height - 1, () => ({
-              cells: [],
-              columns: [],
-            })),
-            ...cmp.rows,
-          ],
+          data: {
+            rows: [
+              {
+                cells: [
+                  {
+                    height: opposite.height,
+                    width: cmp.width,
+                    value: cornerCellValue,
+                    type: CellType.Corner,
+                  },
+                ],
+                columns: [0],
+              },
+              ...cmp.data.rows,
+            ],
+            indexes: shifted,
+          },
         });
         break;
-      case "head":
+      }
+      case "head": {
+        const shifted = cmp.data.rows[0].columns.slice();
+        // mutation of local copy
+        shiftPositionsInPlace(shifted, opposite.width);
+        shifted.unshift(0);
         blocks.push({
           height: cmp.height,
           width: cmp.width + opposite.width,
-          rows: [
-            {
-              cells: [
-                {
-                  height: cmp.height,
-                  width: opposite.width,
-                  value: cornerCellValue,
-                  type: CellType.Corner,
-                },
-                ...cmp.rows[0].cells,
-              ],
-              columns: [
-                0,
-                ...shiftColumns(cmp.rows[0].columns, opposite.width),
-              ],
-            },
-            ...cmp.rows.slice(1),
-          ],
+          data: {
+            rows: [
+              {
+                cells: [
+                  {
+                    height: cmp.height,
+                    width: opposite.width,
+                    value: cornerCellValue,
+                    type: CellType.Corner,
+                  },
+                  ...cmp.data.rows[0].cells,
+                ],
+                columns: shifted,
+              },
+              ...cmp.data.rows.slice(1),
+            ],
+            indexes: cmp.data.indexes,
+          },
         });
         break;
+      }
       default:
         throw new Error(`Unknown table component: ${component}`);
     }
   }
-  return compose(blocks);
+  return blocks;
 }
 
 export interface TableStackerOptions<C extends TableComponent, V> {
@@ -229,21 +223,21 @@ export interface TableStackerOptions<C extends TableComponent, V> {
   deduplicationComponent: C;
 }
 
-const TABLE_COMPONENT_TO_BLOCK_STACKERS: Record<
+const TABLE_COMPONENT_TO_BLOCK_IN_PLACE_STACKERS: Record<
   TableComponent,
   <V>(guard: ProportionalResizeGuard) => BlockCompositor<V>
 > = {
-  head: makeVerticalBlockStacker,
-  indexes: makeHorizontalBlockStacker,
+  head: makeVerticalBlockInPlaceStacker,
+  indexes: makeHorizontalBlockInPlaceStacker,
 };
 
-export function makeTableStacker<C extends TableComponent, V>({
+export function makeTableInPlaceStacker<C extends TableComponent, V>({
   deduplicationComponent,
   isProportionalResize,
   cornerCellValue,
 }: TableStackerOptions<C, V>): TableCompositor<V> {
-  const blockStacker =
-    TABLE_COMPONENT_TO_BLOCK_STACKERS[deduplicationComponent]<V>(
+  const blockInPlaceStacker =
+    TABLE_COMPONENT_TO_BLOCK_IN_PLACE_STACKERS[deduplicationComponent]<V>(
       isProportionalResize
     );
   const opposite = TABLE_COMPONENT_OPPOSITES[deduplicationComponent];
@@ -254,29 +248,31 @@ export function makeTableStacker<C extends TableComponent, V>({
       isProportionalResize
     );
     const bake = deduplicated === null;
-    const stacked = tryStackTableComponent(
+    const blocksToStack = tryPrepareTablesToStack(
       tables,
       opposite,
       bake,
-      cornerCellValue,
-      blockStacker
+      cornerCellValue
     );
     const baked = tables.map(
-      makeTableBaker({
+      makeTableInPlaceBaker({
         [deduplicationComponent]: bake,
-        [opposite]: stacked === null,
+        [opposite]: blocksToStack === null,
         cornerCellValue,
       })
     );
-    const body = blockStacker(baked);
+    const body = blockInPlaceStacker(baked);
     const aspect = TABLE_COMPONENT_SIZE_ASPECTS[opposite];
-    const scaled =
-      deduplicated && makeBlockScaler<V>(aspect, body[aspect])(deduplicated);
+    if (deduplicated) {
+      const scale = makeBlockInPlaceScaler(aspect, body[aspect]);
+      scale(deduplicated);
+    }
     const composedTable: ComposedTable<V> = {
       body,
       baked,
-      [deduplicationComponent as "head"]: scaled,
-      [opposite as "indexes"]: stacked,
+      [deduplicationComponent as "head"]: deduplicated,
+      [opposite as "indexes"]:
+        blocksToStack && blockInPlaceStacker(blocksToStack),
     };
     return composedTable;
   };

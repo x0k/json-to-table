@@ -1,5 +1,5 @@
 import { ASCIITableFormat, blockToASCII } from "./block-to-ascii";
-import { Block, CellType, makeTableBaker } from "./json-table";
+import { Block, CellType, makeTableInPlaceBaker } from "./json-table";
 import { makeTableFactory } from "./json-to-table";
 import { JSONPrimitiveOrNull } from "./json";
 
@@ -8,7 +8,7 @@ import differentHeaders from "./__fixtures__/different-headers.json";
 describe("blockToASCII", () => {
   const cornerCellValue = "№";
   const factory = makeTableFactory({ cornerCellValue });
-  const bake = makeTableBaker<JSONPrimitiveOrNull>({
+  const bake = makeTableInPlaceBaker<JSONPrimitiveOrNull>({
     cornerCellValue,
     head: true,
     indexes: true,
@@ -18,19 +18,22 @@ describe("blockToASCII", () => {
     const table: Block = {
       width: 1,
       height: 1,
-      rows: [
-        {
-          cells: [
-            {
-              type: CellType.Value,
-              height: 1,
-              width: 1,
-              value: "a",
-            },
-          ],
-          columns: [0],
-        },
-      ],
+      data: {
+        rows: [
+          {
+            cells: [
+              {
+                type: CellType.Value,
+                height: 1,
+                width: 1,
+                value: "a",
+              },
+            ],
+            columns: [0],
+          },
+        ],
+        indexes: [0],
+      },
     };
     const ascii = blockToASCII(table);
     expect(`\n${ascii}`).toBe(
@@ -44,19 +47,22 @@ describe("blockToASCII", () => {
     const table: Block = {
       width: 1,
       height: 1,
-      rows: [
-        {
-          cells: [
-            {
-              type: CellType.Value,
-              height: 1,
-              width: 1,
-              value: "a",
-            },
-          ],
-          columns: [0],
-        },
-      ],
+      data: {
+        rows: [
+          {
+            cells: [
+              {
+                type: CellType.Value,
+                height: 1,
+                width: 1,
+                value: "a",
+              },
+            ],
+            columns: [0],
+          },
+        ],
+        indexes: [0],
+      },
     };
     const ascii = blockToASCII(table, {
       format: ASCIITableFormat.MarkdownLike,
