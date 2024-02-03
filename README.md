@@ -46,3 +46,8 @@ Output:
 |     |               |        |      | nestedVal | 2 | Alice |  25 | true   |
 +-----+---------------+--------+------+-----------+---+-------+-----+--------+
 ```
+
+## See also
+
+- Use this app to render JSON responses as tables in your browser [WebMaid](https://github.com/x0k/web-maid#examples)
+- Simple build automation tool [mk](https://github.com/x0k/mk)
