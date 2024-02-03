@@ -31,8 +31,6 @@ export interface TableFactoryOptions<V> {
   stabilizeOrderOfPropertiesInArraysOfObjects?: boolean;
 }
 
-const EMPTY = makeTableFromValue("");
-
 export function makeTableFactory({
   combineArraysOfObjects,
   joinPrimitiveArrayValues,
@@ -154,7 +152,7 @@ export function makeTableFactory({
   function transformRecord(record: Record<string, JSONValue>): Table {
     const keys = Object.keys(record);
     if (keys.length === 0) {
-      return EMPTY;
+      return makeTableFromValue("");
     }
     return stackTablesHorizontal(
       keys,
@@ -179,7 +177,7 @@ export function makeTableFactory({
     }
     if (Array.isArray(value)) {
       if (value.length === 0) {
-        return EMPTY;
+        return makeTableFromValue("");
       }
       let isPrimitives = true;
       let isRecords = true;
@@ -200,7 +198,7 @@ export function makeTableFactory({
         return transformArray(value as JSONRecord[], (value) => {
           const [keys, values] = stabilize(value);
           if (keys.length === 0) {
-            return EMPTY;
+            return makeTableFromValue("");
           }
           return stackTablesHorizontal(keys, values.map(transformValue));
         });

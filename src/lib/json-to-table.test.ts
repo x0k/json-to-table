@@ -223,9 +223,20 @@ describe("makeTableFactory", () => {
 +---+---+---+---+---+
 `);
   })
+  // The original problem was in the modification of global `EMPTY` table
   it('Should handle empty arrays', () => {
-    const table = factory(emptyArrays);
+    const table = factory(emptyArrays as any);
     const ascii = blockToASCII(bake(table));
-    console.log(ascii);
+    expect(`\n${ascii}\n`).toBe(`
++---+------------------------------------------------------------------------------+
+|   |                                    tasks                                     |
+| № +---------------------------+---+----------------------------------------------+
+|   |             n             | d |                      a                       |
++---+---+-----------------------+---+----------------------+-----------------------+
+| 1 | 1 | UspYpi-8NwmZZR7FJprSb |   |          1           | aCx8zMrOjqW6K55TMokHD |
++---+---+-----------------------+---+----------------------+-----------------------+
+| 2 |   |                       | 1 | gwT5xfbxgkPCq_VDyoBO3                        |
++---+---+-----------------------+---+----------------------------------------------+
+`);
   })
 });
