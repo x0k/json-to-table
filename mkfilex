@@ -6,6 +6,9 @@ all:
 test-table:
   bun test src/lib/json-to-table.test.ts
 
+test:
+  bun test
+
 deploy:
   # build (no --bun, conflict with vite)
   bun run build

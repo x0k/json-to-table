@@ -194,7 +194,7 @@ export function makeTableFactory({
         return transformRecord(Object.assign({}, ...value));
       }
       if (stabilizeOrderOfPropertiesInArraysOfObjects && isRecords) {
-        const stabilize = makeObjectPropertiesStabilizer();
+        const stabilize = makeObjectPropertiesStabilizer<JSONValue>();
         return transformArray(value as JSONRecord[], (value) => {
           const [keys, values] = stabilize(value);
           if (keys.length === 0) {

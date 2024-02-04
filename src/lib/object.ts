@@ -5,19 +5,22 @@ interface KeyNode<V> extends Node<number, KeyNode<V>> {
   val: V;
 }
 
-export function makeObjectPropertiesStabilizer() {
-  let count = 0;
-  const order: Record<string, number> = {};
-  return <V>(obj: Record<string, V>) => {
+export function makeObjectPropertiesStabilizer<V>() {
+  let index = 0;
+  const order: Record<string, KeyNode<V>> = {};
+  return (obj: Record<string, V>) => {
     const entries = Object.entries(obj);
     let tree: Tree<number, KeyNode<V>> = undefined;
     for (const [key, val] of entries) {
-      const index = (order[key] ??= count++);
-      tree = insert(tree, {
+      const node = (order[key] ??= {
         key,
         val,
-        value: index,
+        value: index++,
       });
+      node.val = val;
+      node.left = undefined
+      node.right = undefined
+      tree = insert(tree, node);
     }
     const keys: string[] = [];
     const values: V[] = [];
