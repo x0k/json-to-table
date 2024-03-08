@@ -29,6 +29,7 @@ export interface TableFactoryOptions<V> {
   collapseIndexes?: boolean;
   cornerCellValue: V;
   stabilizeOrderOfPropertiesInArraysOfObjects?: boolean;
+  enforceDeduplication?: boolean;
 }
 
 export function makeTableFactory({
@@ -38,6 +39,7 @@ export function makeTableFactory({
   stabilizeOrderOfPropertiesInArraysOfObjects = true,
   cornerCellValue,
   collapseIndexes,
+  enforceDeduplication,
 }: TableFactoryOptions<JSONPrimitiveOrNull>) {
   const isProportionalResize = makeProportionalResizeGuard(
     proportionalSizeAdjustmentThreshold

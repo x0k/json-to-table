@@ -109,6 +109,13 @@ export const TRANSFORM_SCHEMA: JSONSchema = {
             preset: {
               const: TransformPreset.Manual,
             },
+            enforceDeduplication: {
+              title: "Enforce deduplication",
+              description:
+                "Enforces headers and indexes deduplication",
+              type: "boolean",
+              default: false,
+            },
             collapseIndexes: {
               title: "Combine nested indexes",
               description:
@@ -225,6 +232,7 @@ export const TRANSFORM_SCHEMA: JSONSchema = {
 export const TRANSFORMED_UI_SCHEMA: UiSchema = {
   "ui:order": [
     "preset",
+    "enforceDeduplication",
     "collapseIndexes",
     "joinPrimitiveArrayValues",
     "combineArraysOfObjects",
