@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
   Stack,
   Textarea,
@@ -8,8 +8,10 @@ import {
   RadioGroup,
   Radio,
   Input,
+  Text,
 } from "@chakra-ui/react";
-import { Form } from "@rjsf/chakra-ui";
+import Form from "@rjsf/core";
+import { Form as ChakraForm } from "@rjsf/chakra-ui";
 import validator from "@rjsf/validator-ajv8";
 import { fileOpen } from "browser-fs-access";
 
@@ -61,10 +63,12 @@ export function App({ initialData, initialOptions }: AppProps) {
     [setSource]
   );
   const toast = useToast({ isClosable: true });
+  const formRef = useRef<Form>(null);
   return (
     <Layout>
       <RadioGroup onChange={handleSourceTypeChange} value={source.type}>
         <Stack direction="row" gap={2} alignItems="center">
+          <Text>Source type:</Text>
           <Radio value={SourceType.Text}>Text</Radio>
           <Radio value={SourceType.File}>File</Radio>
           <Radio value={SourceType.URL}>Url</Radio>
@@ -111,7 +115,7 @@ export function App({ initialData, initialOptions }: AppProps) {
                 });
             }}
           >
-            Share
+            Share your table
           </Button>
         </Stack>
       </RadioGroup>
@@ -122,10 +126,11 @@ export function App({ initialData, initialOptions }: AppProps) {
             autoFocus
             value={source.data}
             onChange={handleSourceDataChange}
-            rows={10}
+            rows={20}
           />
           <Stack direction="row" gap={2} alignItems="center">
-            <Button onClick={() => sample("test", setSource)}>Test</Button>
+            <Text>Examples:</Text>
+            <Button onClick={() => sample("test", setSource)}>Basic</Button>
             <Button onClick={() => sample("deduplication", setSource)}>
               Deduplication
             </Button>
@@ -154,7 +159,18 @@ export function App({ initialData, initialOptions }: AppProps) {
           onChange={handleSourceDataChange}
         />
       )}
-      <Form
+      <Button
+        onClick={() => {
+          formRef.current?.submit();
+        }}
+        w="100%"
+        type="submit"
+        colorScheme="teal"
+      >
+        Create Table
+      </Button>
+      <ChakraForm
+        ref={formRef}
         validator={validator}
         schema={TRANSFORM_SCHEMA}
         uiSchema={TRANSFORMED_UI_SCHEMA}
@@ -182,10 +198,8 @@ export function App({ initialData, initialOptions }: AppProps) {
             })
         }
       >
-        <Button w="100%" type="submit" colorScheme="teal">
-          Create Table
-        </Button>
-      </Form>
+        <span />
+      </ChakraForm>
     </Layout>
   );
 }
