@@ -1,12 +1,11 @@
 #!/usr/bin/bash -xe
 
-all:
+d:
   bun --bun run dev
 
-test-table:
-  bun test src/lib/json-to-table.test.ts
-
-test:
+t/:
+  table:
+    bun test src/lib/json-to-table.test.ts
   bun test
 
 deploy:
