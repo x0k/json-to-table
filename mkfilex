@@ -1,7 +1,7 @@
 #!/usr/bin/bash -xe
 
 d:
-  bun --bun run dev
+  bun run dev
 
 t/:
   table:
