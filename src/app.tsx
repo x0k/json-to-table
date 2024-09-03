@@ -11,7 +11,6 @@ import {
   Text,
 } from "@chakra-ui/react";
 import Form from "@rjsf/core";
-import { Form as ChakraForm } from "@rjsf/chakra-ui";
 import validator from "@rjsf/validator-ajv8";
 import { fileOpen } from "browser-fs-access";
 
@@ -32,6 +31,7 @@ import {
 import { Layout } from "./layout";
 import { TransformConfig, OutputFormat } from "./app-worker";
 import { appWorker, compressor } from "./init";
+import { Form as ChakraForm } from './form';
 
 async function sample(name: string, setData: (source: Source) => void) {
   const data = await fetchAsText(`${name}.json`);
