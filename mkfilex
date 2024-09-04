@@ -8,9 +8,11 @@ t/:
     bun test src/lib/json-to-table.test.ts
   bun test
 
-deploy:
+b:
   # build (no --bun, conflict with vite)
   bun run build
+
+deploy: b
   # navigate into the build output directory
   cd dist
   # place .nojekyll to bypass Jekyll processing
