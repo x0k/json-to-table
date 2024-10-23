@@ -1,8 +1,8 @@
 import { createMatrix, fromMatrix } from '@/lib/block-matrix';
 import { ASCIITableFormat } from "@/lib/block-to-ascii";
 import type { JSONPrimitiveOrNull } from "@/lib/json";
-import { Block } from '@/lib/json-table';
-import { TableFactoryOptions } from "@/lib/json-to-table";
+import type { Block } from '@/lib/json-table';
+import type { TableFactoryOptions } from "@/lib/json-to-table";
 import { horizontalMirror, transpose, verticalMirror } from '@/lib/matrix';
 
 export enum TransformPreset {

@@ -18,9 +18,11 @@
         default = pkgs.mkShell {
           buildInputs = [
             mk.packages.${system}.default
-            pkgs.nodejs
-            pkgs.bun
+            pkgs.nodejs_22
           ];
+          shellHook = ''
+            source <(COMPLETE=bash mk)
+          '';
         };
       };
     };
