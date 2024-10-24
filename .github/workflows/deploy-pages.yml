@@ -30,14 +30,13 @@ jobs:
           node-version: 22
           cache: 'npm'
           cache-dependency-path: web/package-lock.json
-
-      - name: Go to web folder
-        run: cd web
       
       - name: Install dependencies
+        working-directory: web/
         run: npm ci
 
       - name: Build
+        working-directory: web/
         run: npm run build
 
       - name: Upload artifact
