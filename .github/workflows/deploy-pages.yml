@@ -29,12 +29,13 @@ jobs:
         with:
           node-version: 22
           cache: 'npm'
+          cache-dependency-path: web/package-lock.json
 
       - name: Go to web folder
         run: cd web
       
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build
         run: npm run build
