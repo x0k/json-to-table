@@ -27,6 +27,9 @@
     "@sjsf/ajv8-validator": "^1.1.1",
     "@sjsf/daisyui-theme": "^1.1.1",
     "@sjsf/form": "^1.1.1",
-    "ajv": "^8.17.1"
+    "ajv": "^8.17.1",
+    "browser-fs-access": "^0.35.0",
+    "exceljs": "^4.4.0",
+    "lz-string": "^1.5.0"
   }
 }
