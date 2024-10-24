@@ -7,12 +7,13 @@
     DEFAULT_AJV_CONFIG,
     addFormComponents,
   } from "@sjsf/ajv8-validator";
-  import { theme } from "@sjsf/daisyui-theme";
+  import { theme as daisyTheme } from "@sjsf/daisyui-theme";
   import { translation } from "@sjsf/form/translations/en";
 
   import { OutputFormat, type TransformConfig } from "./app-worker";
   import {
     fetchAsText,
+    makeSource,
     resolveSource,
     SourceType,
     TRANSFORM_SCHEMA,
@@ -25,6 +26,7 @@
   import { copyTextToClipboard } from "./lib/copy-to-clipboard";
   import { makeDownloadFileByUrl } from './lib/file';
   import { createPage } from './lib/browser';
+  import ThemePicker from './theme-picker.svelte';
 
   const {
     initialData,
@@ -88,9 +90,14 @@
         // });
       });
   }
+
+  let theme = $state<"light" | "dark" | "system">(localStorage.theme ?? "system");
 </script>
 
 <Layout>
+  {#snippet append()}
+    <ThemePicker bind:theme />
+  {/snippet}
   <div class="flex gap-2 items-center">
     <p>Source type:</p>
     {#each Object.values(SourceType) as type}
@@ -99,6 +106,7 @@
           <input
             type="radio"
             bind:group={source.type}
+            onchange={() => { source = makeSource(source.type) }}
             value={type}
             class="radio"
           />
@@ -161,7 +169,7 @@
     Create Table
   </button>
   <FormBase
-    {...theme}
+    {...daisyTheme}
     bind:form
     bind:value={transformData}
     schema={TRANSFORM_SCHEMA}

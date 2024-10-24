@@ -138,7 +138,7 @@ export const TRANSFORM_SCHEMA: Schema = {
             proportionalSizeAdjustmentThreshold: {
               title: "Proportional size adjustment threshold",
               description:
-                "Specifies the threshold to which the value (height, width) can be increased for a proportional increase. The default is 1 (by 100%).",
+                "Specifies the threshold to which the value (height, width) can be increased for a proportional increase. Default is 1 (by 100%).",
               type: "number",
               minimum: 0,
               default: 1,
